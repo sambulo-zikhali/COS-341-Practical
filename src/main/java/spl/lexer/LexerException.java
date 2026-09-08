@@ -1,4 +1,7 @@
 package spl.lexer;
 
-public class LexerException {
+public class LexerException extends RuntimeException{
+    public LexerException(String message) {
+        super(message);
+    }
 }
