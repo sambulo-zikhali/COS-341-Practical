@@ -91,4 +91,97 @@ public class Grammar {
     public String getStartSymbol() {
         return AUGMENTED_START;
     }
+
+    //first sets
+
+    private void computeFirstSets() {
+        classifySymbols();
+        firstSets = new LinkedHashMap<>();
+        for(String nt :nonTerminals) firstSets.put(nt, new LinkedHashSet<>());
+        for(String t : getTerminals()) firstSets.put(t,new LinkedHashSet<>(Set.of(t)));
+
+        boolean changed = true;
+        while(changed) {
+            changed = false;
+            for(Rule r :rules) {
+                Set<String> firstOfLhs = firstSets.get(r.getLhs());
+                if(r.isEpsilon()) {
+                    changed |= firstOfLhs.add(EPSILON);
+                    continue;
+                }
+                boolean allNullableSoFar = true;
+                for(String sym : r.getRhs()) {
+                    Set<String> firstOfSym = firstSets.get(sym);
+                    for(String s : firstOfSym) {
+                        if(!s.equals(EPSILON)) changed |= firstOfLhs.add(s);
+                    }
+                    if(!firstOfSym.contains(EPSILON)) {
+                        allNullableSoFar = false;
+                        break;
+                    }
+                    }
+                    if(allNullableSoFar) {
+                        changed |= firstOfLhs.add(EPSILON);
+                    }
+                }
+            }
+        }
+
+    public Set<String> firstOf(String symbol) {
+        return firstSets.get(symbol);
+        }
+
+    public Set<String> firstOfSequence(List<String> symbols) {
+        Set<String> result = new LinkedHashSet<>();
+        boolean allNullableSoFar = true;
+        for(String sym : symbols) {
+            Set<String> firstOfSym = firstSets.get(sym);
+            for(String s: firstOfSym) {
+                if(!s.equals(EPSILON)) result.add(s);
+            }
+            if(!firstOfSym.contains(EPSILON)) {
+                allNullableSoFar = false;
+                break;
+            }
+        }
+        if(allNullableSoFar) result.add(EPSILON);
+        return result;
+    }
+
+    private  void computeFollowSets() {
+        followSets = new LinkedHashMap<>();
+        for(String nt : nonTerminals) followSets.put(nt, new LinkedHashSet<>());
+
+        followSets.get(AUGMENTED_START).add("$");
+
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for(Rule r: rules) {
+                List<String> rhs = r.getRhs();
+                for (int i = 0; i < rhs.size(); i++) {
+                    String sym = rhs.get(i);
+                    if(!nonTerminals.contains(sym)) continue;
+
+                    List<String> rest = rhs.subList(i+1, rhs.size());
+                    Set<String> firstOfRest = firstOfSequence(rest);
+
+                    Set<String> followOfSym = followSets.get(sym);
+                    for(String s : firstOfRest) {
+                        if(!s.equals(EPSILON)) changed |= followOfSym.add(s);
+                    }
+                    if(firstOfRest.contains(EPSILON)) {
+                        changed |= followOfSym.addAll(followSets.get(r.getLhs()));
+                    }
+                }
+            }     
+        }
+    }
+    public Set<String> followOf(String nonTerminal) {
+        return  followSets.get(nonTerminal);
+    }
 }
+
+
+
+
