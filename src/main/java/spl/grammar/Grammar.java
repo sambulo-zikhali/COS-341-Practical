@@ -44,6 +44,59 @@ public class Grammar {
  
         add(id++, "F_DECL"); // epsilon
         add(id++, "F_DECL", "F_TYPE", "F_DECL");
+
+        add(id++,"F_TYPE","void","USER-DEFINED-NAME","(","V_DECL",")","{","P","return","}");
+        add(id++,"F_TYPE","num","USER-DEFINED-NAME","(","V_DECL",")","{","P","return","(","TEMP",")","}");
+
+        add(id++,"ALGO");
+        add(id++,"ALGO","INSRT",";","ALGO");
+
+        add(id++,"OUTP","(","TERM",")");
+        add(id++,"OUTP","STRING");
+
+
+        add(id++,"INSTR","print","OUTP");
+        add(id++,"INSTR","nop");
+        add(id++,"INSTR","comment","STRING");
+        add(id++,"INSTR","ASSIGN");
+        add(id++,"INSTR","BRANCH");
+        add(id++,"INSTR","LOO[");
+        add(id++,"INSTR","CALL");
+
+        add(id++,"CALL","USER-DEFINED-NAME","(","INPUT",")");
+
+        add(id++,"INPUT"); //EPSILLON
+        add(id++,"INPUT","TERM","INPUT");
+
+        add(id++,"ASSIGN","USER-DEFINED-NAME","=","TERM");
+
+        add(id++,"TERM","USER-DEFINED-NAME");
+        add(id++,"TERM","NUM");
+        add(id++,"TERM","CALL");
+        add(id++,"TERM","mod","(","TERM","TERM",")");
+        add(id++,"TERM","add","(","TERM","TERM",")");
+        add(id++,"TERM","sub","(","TERM","TERM",")");
+        add(id++,"TERM","div","(","TERM","TERM",")");
+        add(id++,"TERM","mod","(","TERM","TERM",")");
+        add(id++,"TERM","neg","(","TERM",")");
+
+        add(id++,"BRANCH","if","BOOL","then","{","ALGO","}","else","{","ALGO","}");
+
+        add(id++,"BOOL","not","(","BOOL",")");
+        add(id++,"BOOL","and","(","BOOL","BOOL",")");
+        add(id++,"BOOL","or","(","BOOL","BOOL",")");
+        add(id++,"BOOL","eq","(","TERM","TERM",")");
+        add(id++,"BOOL","larger","(","TERM","TERM",")");
+        add(id++,"BOOL","lesser","(","TERM","TERM",")");
+
+        add(id++,"LOOP","COND","BOOL","do","{","ALGO","}");
+        add(id++,"LOOP","do","{","ALGO","}","COND","COND");
+
+        add(id++,"while");
+        add(id++,"until"); 
+
+        computeFirstSets();
+        computeFollowSets();
     }
 
     private void add(int id,String lhs,String... rhsSymbols){
