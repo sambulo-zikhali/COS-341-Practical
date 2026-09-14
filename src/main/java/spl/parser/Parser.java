@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import spl.grammar.ParsingTable;
+import spl.model.ParseAction;
 import spl.model.Token;
 import spl.model.TokenType;
 import spl.model.TreeNode;
@@ -40,7 +41,23 @@ public class Parser {
         Token lookahead = tokens.isEmpty() ? EOF_TOKEN : tokens.peek();
 
         while (true) {
+            int state = stateStack.peek();
+            ParseAction action = table.get(state, lookahead.type);
 
+            if (action == null || action.kind == ParseAction.Kind.ERROR) {
+                throw new ParserException(lookahead.line, null, lookahead.text);
+            }
+
+            switch (action.kind) {
+                case SHIFT:
+                    break;
+                case REDUCE:
+                    break;
+                case ACCEPT:
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
