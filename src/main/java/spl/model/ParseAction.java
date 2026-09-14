@@ -38,4 +38,5 @@ public class ParseAction {
     public static ParseAction error() {
         return new ParseAction(Kind.ERROR, -1);
     }
+
 }
