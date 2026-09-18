@@ -55,6 +55,8 @@ public class Parser {
                     break;
                 case ACCEPT:
                     break;
+                case GOTO:
+                case ERROR:
                 default:
                     break;
             }
