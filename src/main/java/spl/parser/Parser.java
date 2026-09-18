@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import spl.grammar.ParsingTable;
+import spl.grammar.Rule;
 import spl.model.ParseAction;
 import spl.model.Token;
 import spl.model.TokenType;
@@ -50,16 +51,67 @@ public class Parser {
 
             switch (action.kind) {
                 case SHIFT:
+                    int id = ids.next();
+                    TreeNode leaf = new TreeNode(id, lookahead.text);
+                    nodesById.put(id, leaf);
+
+                    nodeStack.push(id);
+                    stateStack.push(action.value);
+
+                    tokens.poll();
+                    lookahead = tokens.isEmpty() ? EOF_TOKEN : tokens.peek();
+
                     break;
                 case REDUCE:
+                    Rule rule = table.getRule(action.value);
+                    int rhsLen = rule.length();
+
+                    int[] childIds = new int[rhsLen];
+                    for (int i = rhsLen - 1; i >= 0; i--) {
+                        childIds[i] = nodeStack.pop();
+                    }
+
+                    int newId = ids.next();
+                    TreeNode inner = new TreeNode(newId, rule.getLhs());
+                    for (int childId : childIds) {
+                        inner.children.add(childId);
+
+                        TreeNode child = nodesById.get(childId);
+                        if (child == null) {
+                            throw new IllegalStateException("Parser bug: node" + childId + " was never registered.");
+                        }
+                        child.parent = newId;
+                    }
+                    nodesById.put(newId, inner);
+                    nodeStack.push(newId);
+
+                    for (int i = 0; i < rhsLen; i++) {
+                        stateStack.pop();
+                    }
+                    int gotoState = table.getGoto(stateStack.peek(), rule.getLhs());
+                    if (gotoState < 0) {
+                        throw new ParserException(lookahead.line, "valid GOTO for " + rule.getLhs(), lookahead.text);
+                    }
+                    stateStack.push(gotoState);
+
                     break;
                 case ACCEPT:
-                    break;
+                    if (nodeStack.size() != 1) {
+                        throw new IllegalStateException(
+                                "Parser bug: ACCEPT with " + nodeStack.size() + "nodes on stack (expected 1).");
+                    }
+                    int rootId = nodeStack.pop();
+                    return nodesById.get(rootId);
+
                 case GOTO:
                 case ERROR:
                 default:
-                    break;
+                    throw new ParserException(lookahead.line, "SHIFT, REDUCE, or ACCEPT", lookahead.text);
             }
         }
+    }
+
+    private String expectedFrom(int state) {
+        return "placeholder";
     }
 }
