@@ -47,10 +47,10 @@ public class Grammar {
         add(id++, "F_DECL", "F_TYPE", "F_DECL");
 
         add(id++,"F_TYPE","void","USER-DEFINED-NAME","(","V_DECL",")","{","P","return","}");
-        add(id++,"F_TYPE","num","USER-DEFINED-NAME","(","V_DECL",")","{","P","return","(","TEMP",")","}");
+        add(id++,"F_TYPE","num","USER-DEFINED-NAME","(","V_DECL",")","{","P","return","(","TERM",")","}");
 
         add(id++,"ALGO");
-        add(id++,"ALGO","INSRT",";","ALGO");
+        add(id++,"ALGO","INSTR",";","ALGO");
 
         add(id++,"OUTP","(","TERM",")");
         add(id++,"OUTP","STRING");
@@ -93,8 +93,8 @@ public class Grammar {
         add(id++,"LOOP","COND","BOOL","do","{","ALGO","}");
         add(id++,"LOOP","do","{","ALGO","}","COND","BOOL");
 
-        add(id++,"while");
-        add(id++,"until"); 
+        add(id++,"COND","while");
+        add(id++,"COND","until");
 
         computeFirstSets();
         computeFollowSets();

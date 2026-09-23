@@ -66,7 +66,7 @@ public enum TokenType {
     public static TokenType fromGrammarSymbol(String symbol) {
         TokenType t = BY_SYMBOL.get(symbol);
         if(t == null) {
-            throw new IllegalArgumentException("Not a terminal symbol of SPL"+symbol);
+            throw new IllegalArgumentException("Not a terminal symbol of SPL "+symbol);
         }
         return t;
     }

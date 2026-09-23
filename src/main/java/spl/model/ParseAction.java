@@ -50,7 +50,7 @@ public final class ParseAction {
     }
 
     public int getRuleId() {
-        if(kind !=kind.REDUCE) throw new IllegalStateException("Not a REDUCE action: ");
+        if (kind != Kind.REDUCE) throw new IllegalStateException("Not a REDUCE action: ");
         return value;
     }
 
@@ -58,7 +58,7 @@ public final class ParseAction {
     public String toString() {
         switch(kind) {
             case SHIFT: return "shift "+value;
-            case REDUCE: return "redue "+value;
+            case REDUCE: return "reduce "+value;
             case ACCEPT: return "accept";
             default: return "error";
         }

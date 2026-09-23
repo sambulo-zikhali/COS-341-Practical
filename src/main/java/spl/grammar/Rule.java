@@ -13,7 +13,7 @@ public class Rule {
     public Rule(int id,String lhs,List<String> rhs) {
         this.id=id;
         this.lhs=lhs;
-        this.rhs=Collections.unmodifiableList(rhs);
+        this.rhs=Collections.unmodifiableList(List.copyOf(rhs));
     }
 
     public int getId() {
