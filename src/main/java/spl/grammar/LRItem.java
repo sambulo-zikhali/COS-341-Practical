@@ -58,6 +58,9 @@ final class LRItem {
         {
             sb.append('.');
         }
+        if(dot==rhs.size()){
+            sb.append('.');
+        }
         return sb.toString().trim();
     }
 }

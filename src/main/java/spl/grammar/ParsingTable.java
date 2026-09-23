@@ -27,6 +27,7 @@ public class ParsingTable {
         return startState;
     }
 
+/** ACTION(state, token). Returns ParseAction.error(). */
     public ParseAction get(int state,TokenType token) {
         Map<TokenType,ParseAction> row = actionTable.get(state);
         if(row == null)
@@ -36,6 +37,7 @@ public class ParsingTable {
         return row.getOrDefault(token, ParseAction.error());
     }
 
+/** GOTO(state, nonTerminal), used after a reduce to find the next state*/
     public int getGoto(int state,String nonTerminal) {
         Map<String,Integer> row = gotoTable.get(state);
         if(row == null)
@@ -45,6 +47,7 @@ public class ParsingTable {
         return row.getOrDefault(nonTerminal, -1);
     }
 
+/** Look up a production by its rules and stuff */
     public Rule getRule(int ruleId) {
         return rules.get(ruleId);
     }
