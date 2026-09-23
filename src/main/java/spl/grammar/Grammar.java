@@ -36,6 +36,7 @@ public class Grammar {
         int id =0;
 
         add(id++,AUGMENTED_START,"SPL_PROG","$");
+
         add(id++, "SPL_PROG", "P", "$");
         add(id++, "P", "V_DECL", ":", "F_DECL", ":", "ALGO");
  
@@ -60,7 +61,7 @@ public class Grammar {
         add(id++,"INSTR","comment","STRING");
         add(id++,"INSTR","ASSIGN");
         add(id++,"INSTR","BRANCH");
-        add(id++,"INSTR","LOO[");
+        add(id++,"INSTR","LOOP");
         add(id++,"INSTR","CALL");
 
         add(id++,"CALL","USER-DEFINED-NAME","(","INPUT",")");
@@ -76,8 +77,8 @@ public class Grammar {
         add(id++,"TERM","mod","(","TERM","TERM",")");
         add(id++,"TERM","add","(","TERM","TERM",")");
         add(id++,"TERM","sub","(","TERM","TERM",")");
+        add(id++,"TERM","mul","(","TERM","TERM",")");
         add(id++,"TERM","div","(","TERM","TERM",")");
-        add(id++,"TERM","mod","(","TERM","TERM",")");
         add(id++,"TERM","neg","(","TERM",")");
 
         add(id++,"BRANCH","if","BOOL","then","{","ALGO","}","else","{","ALGO","}");
@@ -90,7 +91,7 @@ public class Grammar {
         add(id++,"BOOL","lesser","(","TERM","TERM",")");
 
         add(id++,"LOOP","COND","BOOL","do","{","ALGO","}");
-        add(id++,"LOOP","do","{","ALGO","}","COND","COND");
+        add(id++,"LOOP","do","{","ALGO","}","COND","BOOL");
 
         add(id++,"while");
         add(id++,"until"); 
