@@ -1,16 +1,27 @@
 package spl.grammar;
 
+import java.util.Collections;
 import java.util.List;
 
+
+
 public class Rule {
-    List<String> rhs;
+    private final int id;
+    private final String lhs;
+    private final List<String> rhs;
+
+    public Rule(int id,String lhs,List<String> rhs) {
+        this.id=id;
+        this.lhs=lhs;
+        this.rhs=Collections.unmodifiableList(List.copyOf(rhs));
+    }
 
     public int getId() {
-        return -1;
+        return id;
     }
 
     public String getLhs() {
-        return "";
+        return lhs;
     }
 
     public List<String> getRhs() {
@@ -18,25 +29,34 @@ public class Rule {
     }
 
     public int length() {
-        return -1;
+        return rhs.size();
     }
 
     public boolean isEpsilon() {
-        return false;
+        return rhs.isEmpty();
     }
 
-    @Override
+    @Override 
     public String toString() {
-        return "-1";
+        return lhs +" -> "+(rhs.isEmpty() ? "epsilon": String.join(" ", rhs));
     }
 
-    @Override
+    @Override 
     public boolean equals(Object o) {
-        return false;
+        if(this == o)
+        {
+            return true;
+        }
+        if(!(o instanceof Rule))
+        {
+            return false;
+        }
+        Rule other = (Rule) o;
+        return id == other.id;
     }
 
-    @Override
+    @Override 
     public int hashCode() {
-        return -1;
+        return Integer.hashCode(id);
     }
 }
