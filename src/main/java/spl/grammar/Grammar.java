@@ -21,8 +21,9 @@ import java.util.Set;
 
 public class Grammar {
 
-    public static final String AUGMENTED_START= "SPL_PROG";
-    public static final String EPSILON="epsilon";
+    /** The augmented start symbol added for LR table construction. Never appears in user-visible trees. */
+    public static final String AUGMENTED_START = "SPL_PROG'";
+    public static final String EPSILON = "epsilon";
 
     private final List<Rule> rules = new ArrayList<>();
     private final Set<String> nonTerminals = new LinkedHashSet<>();
@@ -33,10 +34,13 @@ public class Grammar {
     private Map<String, Set<String>> followSets;
 
     public Grammar () {
-        int id =0;
+        int id = 0;
 
-        add(id++,AUGMENTED_START,"SPL_PROG","$");
+        // Rule 0: augmented start — SPL_PROG' -> SPL_PROG
+        // ParsingTableBuilder uses this to recognise the ACCEPT condition.
+        add(id++, AUGMENTED_START, "SPL_PROG");
 
+        // Rule 1: SPL_PROG -> P $   (spec's real start production)
         add(id++, "SPL_PROG", "P", "$");
         add(id++, "P", "V_DECL", ":", "F_DECL", ":", "ALGO");
  
@@ -66,7 +70,7 @@ public class Grammar {
 
         add(id++,"CALL","USER-DEFINED-NAME","(","INPUT",")");
 
-        add(id++,"INPUT"); //EPSILLON
+        add(id++,"INPUT"); //EPSILON
         add(id++,"INPUT","TERM","INPUT");
 
         add(id++,"ASSIGN","USER-DEFINED-NAME","=","TERM");
@@ -202,11 +206,13 @@ public class Grammar {
         return result;
     }
 
-    private  void computeFollowSets() {
+    private void computeFollowSets() {
         followSets = new LinkedHashMap<>();
         for(String nt : nonTerminals) followSets.put(nt, new LinkedHashSet<>());
 
+        // FOLLOW(SPL_PROG') = {$}; SPL_PROG inherits that via SPL_PROG' -> SPL_PROG.
         followSets.get(AUGMENTED_START).add("$");
+        followSets.get("SPL_PROG").add("$");
 
         boolean changed = true;
         while (changed) {
@@ -231,11 +237,8 @@ public class Grammar {
             }     
         }
     }
+
     public Set<String> followOf(String nonTerminal) {
-        return  followSets.get(nonTerminal);
+        return followSets.get(nonTerminal);
     }
 }
-
-
-
-
