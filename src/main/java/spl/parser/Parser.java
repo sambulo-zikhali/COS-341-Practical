@@ -1,6 +1,7 @@
 package spl.parser;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +40,9 @@ public class Parser {
         Stack<Integer> stateStack = new Stack<>();
         Stack<Integer> nodeStack = new Stack<>();
 
+        // Push the initial state so the first peek() doesn't crash
+        stateStack.push(table.getStartState());
+
         Token lookahead = tokens.isEmpty() ? EOF_TOKEN : tokens.peek();
 
         while (true) {
@@ -46,7 +50,8 @@ public class Parser {
             ParseAction action = table.get(state, lookahead.type);
 
             if (action == null || action.kind == ParseAction.Kind.ERROR) {
-                throw new ParserException(lookahead.line, null, lookahead.text);
+                String expected = expectedFrom(state);
+                throw new ParserException(lookahead.line, expected, lookahead.text);
             }
 
             switch (action.kind) {
@@ -98,7 +103,7 @@ public class Parser {
                 case ACCEPT:
                     if (nodeStack.size() != 1) {
                         throw new IllegalStateException(
-                                "Parser bug: ACCEPT with " + nodeStack.size() + "nodes on stack (expected 1).");
+                                "Parser bug: ACCEPT with " + nodeStack.size() + " nodes on stack (expected 1).");
                     }
                     int rootId = nodeStack.pop();
                     return nodesById.get(rootId);
@@ -111,7 +116,23 @@ public class Parser {
         }
     }
 
+    /**
+     * Inspects the ACTION table for the given state and returns a
+     * human-readable string listing every token that has a valid
+     * (non-error) action — i.e. what the parser was expecting to see.
+     */
     private String expectedFrom(int state) {
-        return "placeholder";
+        List<String> expected = new ArrayList<>();
+        for (TokenType tt : TokenType.values()) {
+            ParseAction a = table.get(state, tt);
+            if (a != null && a.kind != ParseAction.Kind.ERROR) {
+                // Use the grammar symbol (e.g. "print", "NUM", "(") rather than the enum name
+                expected.add(tt.getGrammarType());
+            }
+        }
+        if (expected.isEmpty()) {
+            return "<nothing — parser is in an invalid state>";
+        }
+        return String.join(", ", expected);
     }
 }
