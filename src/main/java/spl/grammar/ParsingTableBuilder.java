@@ -29,9 +29,7 @@ import spl.model.TokenType;
 */
 public class ParsingTableBuilder {
 
-    /** describes one shift/reduce or deruce/reduce 
-    *conflict found during table construction. */
-
+    /** describes one shift/reduce or reduce/reduce conflict found during table construction. */
     public static final class Conflict {
         public final int state;
         public final TokenType onToken;
@@ -92,7 +90,7 @@ public class ParsingTableBuilder {
     }
 
     private void buildCanonicalCollection() {
-        Rule startRule = grammar.getRule(0); // I'm pretty sure this is for the augmented startstate 
+        Rule startRule = grammar.getRule(0); // augmented start rule
         Set<LRItem> startState = closure(Set.of(new LRItem(startRule,0)));
         states.add(startState);
 
@@ -125,8 +123,8 @@ public class ParsingTableBuilder {
             }
         }
     }
-    //step 2 action/goto tables form the item sets
 
+    // Step 2: build ACTION/GOTO tables from the item sets
     public ParsingTable build() {
         buildCanonicalCollection();
 
@@ -137,43 +135,47 @@ public class ParsingTableBuilder {
             Set<LRItem> items = states.get(stateId);
             Map<String,Integer> stateTransitions = transitions.getOrDefault(stateId,Map.of());      
             
-            
             Map<TokenType,ParseAction> actionRow = actionTable.computeIfAbsent(stateId, k -> new LinkedHashMap<>());
             Map<String, Integer> gotoRow = gotoTable.computeIfAbsent(stateId, k -> new LinkedHashMap<>());
 
-            //SHIFT action and GOTO entries from transitions
-
+            // SHIFT actions and GOTO entries from transitions
             for(Map.Entry<String, Integer> e : stateTransitions.entrySet()) {
                 String symbol = e.getKey();
                 int target = e.getValue();
                 if(grammar.isTerminal(symbol)) {
                     TokenType tt = TokenType.fromGrammarSymbol(symbol);
-                    setAction(actionRow,stateId,tt,ParseAction.shift(target));
+                    setAction(actionRow, stateId, tt, ParseAction.shift(target));
                 }
                 else {
                     gotoRow.put(symbol,target);
                 }
             }
-            //reduee
-            for(LRItem item :items) {
+
+            // REDUCE (and ACCEPT) actions from completed items
+            for(LRItem item : items) {
                 if(!item.isComplete()) continue;
 
                 if(item.rule.getId() == 0) {
-                    //augmented rule matched 
-                    setAction(actionRow,stateId,TokenType.EOF, ParseAction.accept());
+                    // Augmented rule SPL_PROG' -> SPL_PROG . is complete: ACCEPT on EOF
+                    setAction(actionRow, stateId, TokenType.EOF, ParseAction.accept());
                     continue;
                 }
 
                 for(String followSymbol : grammar.followOf(item.rule.getLhs())) {
                     TokenType tt = TokenType.fromGrammarSymbol(followSymbol);
-                    setAction(actionRow,stateId,tt,ParseAction.reduce(item.rule.getId()));
+                    setAction(actionRow, stateId, tt, ParseAction.reduce(item.rule.getId()));
                 }
             }
         }
         return new ParsingTable(0, actionTable, gotoTable, grammar.getRules());
     }
-    //does an action and like records it and  first seen action idk 
-    private void setAction(Map<TokenType,ParseAction> row, int stateId,TokenType token, ParseAction candidate) {
+
+    /**
+     * Records a conflict. On shift/reduce: keeps the shift (standard SLR disambiguation).
+     * On reduce/reduce: keeps the earlier (lower rule id) reduce, which matches grammar order.
+     * All conflicts are logged in {@link #getConflicts()} for inspection.
+     */
+    private void setAction(Map<TokenType,ParseAction> row, int stateId, TokenType token, ParseAction candidate) {
         ParseAction existing = row.get(token);
         if(existing == null) {
             row.put(token, candidate);
@@ -183,22 +185,34 @@ public class ParsingTableBuilder {
 
         ParseAction kept = existing;
         ParseAction discarded = candidate;
+
         if(existing.kind == ParseAction.Kind.REDUCE && candidate.kind == ParseAction.Kind.SHIFT) {
+            // Shift/reduce conflict: prefer shift (standard SLR resolution)
             kept = candidate;
             discarded = existing;
             row.put(token, candidate);
+        } else if(existing.kind == ParseAction.Kind.REDUCE && candidate.kind == ParseAction.Kind.REDUCE) {
+            // Reduce/reduce conflict: keep lower rule id (grammar ordering)
+            if(candidate.value < existing.value) {
+                kept = candidate;
+                discarded = existing;
+                row.put(token, candidate);
+            }
         }
+
         conflicts.add(new Conflict(stateId, token, kept, discarded));
     }
 
-    public List<Conflict> geConflicts() {
+    /** Returns all shift/reduce and reduce/reduce conflicts found during table construction. */
+    public List<Conflict> getConflicts() {
         return conflicts;
     }
+
     public int numberOfStates() {
         return states.size();
     }
 
-    //for debugging
+    // For debugging
     public String describeState(int stateId) {
         StringBuilder sb = new StringBuilder("State "+stateId+":\n");
         for(LRItem item : states.get(stateId)) {
@@ -207,4 +221,3 @@ public class ParsingTableBuilder {
         return sb.toString();
     }
 }
-
