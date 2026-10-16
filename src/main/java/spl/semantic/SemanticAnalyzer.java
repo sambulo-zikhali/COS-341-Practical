@@ -54,6 +54,8 @@ public final class SemanticAnalyzer {
         for (int i = 0; i < functionTypes.size(); i++) {
             processFunction(functionTypes.get(i), names.get(i), scope, symbolTable, nodes);
         }
+
+        resolveUses(children.get(4), scope, symbolTable, nodes);
     }
 
     private void processFunction(
@@ -72,6 +74,10 @@ public final class SemanticAnalyzer {
         Scope functionScope = new Scope(body.id, parentScope.level + 1, parentScope);
         declareVariables(children.get(3), functionScope, symbolTable, nodes, true);
         processProgram(body, functionScope, symbolTable, nodes);
+
+        if (children.size() == 12 && "num".equals(children.get(0).contents)) {
+            resolveUses(children.get(9), functionScope, symbolTable, nodes);
+        }
     }
 
     private void declareVariables(
@@ -167,5 +173,37 @@ public final class SemanticAnalyzer {
             children.add(child);
         }
         return children;
+    }
+
+    private void resolveUses(
+            TreeNode node,
+            Scope scope,
+            SymbolTable symbolTable,
+            Map<Integer, TreeNode> nodes) {
+        if (node.children.isEmpty()) {
+            if (!node.contents.startsWith("#")) {
+                return;
+            }
+
+            TreeNode parent = node.parent == null ? null : nodes.get(node.parent);
+            Symbol symbol;
+            if (parent != null && "CALL".equals(parent.contents)) {
+                symbol = scope.getFunction(node.contents);
+                if (symbol == null) {
+                    throw new SemanticException("undeclared function " + node.contents, node.id);
+                }
+            } else {
+                symbol = scope.lookupVariable(node.contents);
+                if (symbol == null) {
+                    throw new SemanticException("undeclared variable " + node.contents, node.id);
+                }
+            }
+            symbolTable.bind(node.id, symbol);
+            return;
+        }
+
+        for (TreeNode child : childrenOf(node, nodes)) {
+            resolveUses(child, scope, symbolTable, nodes);
+        }
     }
 }
