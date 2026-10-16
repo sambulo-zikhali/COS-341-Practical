@@ -8,6 +8,11 @@ public final class SymbolTable {
     private final Map<Integer, Symbol> symbolsByDeclarationNodeId = new LinkedHashMap<>();
     private final Map<Integer, Symbol> bindingsByNodeId = new LinkedHashMap<>();
     private final Map<Integer, Scope> scopesById = new LinkedHashMap<>();
+    private int nextInternalNameId;
+
+    public String newInternalName() {
+        return "v" + nextInternalNameId++;
+    }
 
     public void addScope(Scope scope) {
         if (scope == null) {

@@ -11,8 +11,15 @@ public final class Symbol {
     public final Kind kind;
     public final int declarationNodeId;
     public final int scopeId;
+    public final boolean isParameter;
 
-    public Symbol(String sourceName, String internalName, Kind kind, int declarationNodeId, int scopeId) {
+    public Symbol(
+            String sourceName,
+            String internalName,
+            Kind kind,
+            int declarationNodeId,
+            int scopeId,
+            boolean isParameter) {
         if (sourceName == null || sourceName.isBlank()) {
             throw new IllegalArgumentException("sourceName must not be blank");
         }
@@ -22,10 +29,14 @@ public final class Symbol {
         if (kind == null) {
             throw new IllegalArgumentException("kind must not be null");
         }
+        if (isParameter && kind != Kind.VARIABLE) {
+            throw new IllegalArgumentException("Only variable symbols can be parameters");
+        }
         this.sourceName = sourceName;
         this.internalName = internalName;
         this.kind = kind;
         this.declarationNodeId = declarationNodeId;
         this.scopeId = scopeId;
+        this.isParameter = isParameter;
     }
 }
