@@ -21,7 +21,7 @@ import java.util.List;
  * Entry point: reads an SPL source file, parses it, and either writes
  * tree.xml on success or prints a meaningful syntax error on failure.
  *
- * Usage: java -jar compiler.jar SPL.txt
+ * Usage: java -jar group-23.jar SPL.txt
  *        (or with no args, looks for SPL.txt in the current directory)
  */
 public class Main {
