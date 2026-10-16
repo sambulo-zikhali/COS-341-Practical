@@ -168,6 +168,120 @@ class SemanticAnalyzerUseTest {
         assertEquals(1, emptyProgram.symbolTable.getScopesById().size());
     }
 
+    @Test
+    void assignmentTargetAndValueBothResolve() {
+        Analysis analysis = analyze("#x #y : : #x = #y ;");
+        TreeNode xDeclaration = findNameByParent(analysis, "#x", "V_DECL");
+        TreeNode yDeclaration = findNameByParent(analysis, "#y", "V_DECL");
+        TreeNode target = findNameByParent(analysis, "#x", "ASSIGN");
+        TreeNode value = findNameByParent(analysis, "#y", "TERM");
+
+        assertEquals(
+                analysis.symbolTable.getSymbol(xDeclaration.id).internalName,
+                analysis.symbolTable.getBinding(target.id).internalName);
+        assertEquals(
+                analysis.symbolTable.getSymbol(yDeclaration.id).internalName,
+                analysis.symbolTable.getBinding(value.id).internalName);
+    }
+
+    @Test
+    void assignmentToUndeclaredTargetThrows() {
+        Analysis analysis = parse(": : #missing = 1 ;");
+        TreeNode target = findNameByParent(analysis, "#missing", "ASSIGN");
+
+        SemanticException exception = assertThrows(
+                SemanticException.class,
+                () -> new SemanticAnalyzer().analyze(analysis.root, analysis.nodes));
+
+        assertEquals(target.id, exception.nodeId);
+        assertEquals("undeclared variable #missing", exception.getMessage());
+    }
+
+    @Test
+    void namesInCallArgumentsResolve() {
+        Analysis analysis = analyze(
+                "#x : void #f ( #p ) { : : return } : #f ( #x ) ;");
+        TreeNode parameter = findNameByParent(analysis, "#p", "V_DECL");
+        TreeNode outerVariable = findNameByParent(analysis, "#x", "V_DECL");
+        TreeNode argument = findNameByParent(analysis, "#x", "TERM");
+
+        assertNotNull(analysis.symbolTable.getSymbol(parameter.id));
+        assertEquals(
+                analysis.symbolTable.getSymbol(outerVariable.id).internalName,
+                analysis.symbolTable.getBinding(argument.id).internalName);
+    }
+
+    @Test
+    void namesInBothIfBranchesResolveAndUndeclaredElseNameThrows() {
+        Analysis valid = analyze(
+                "#x : : if eq ( #x 0 ) then { print ( #x ) ; } "
+                        + "else { print ( #x ) ; } ;");
+        TreeNode declaration = findNameByParent(valid, "#x", "V_DECL");
+        TreeNode branch = valid.nodes.values().stream()
+                .filter(node -> "BRANCH".equals(node.contents))
+                .findFirst()
+                .orElseThrow();
+        List<TreeNode> uses = findNamesInSubtree(valid, branch);
+        assertEquals(3, uses.size());
+        for (TreeNode use : uses) {
+            assertEquals(
+                    valid.symbolTable.getSymbol(declaration.id).internalName,
+                    valid.symbolTable.getBinding(use.id).internalName);
+        }
+
+        Analysis invalid = parse(
+                "#x : : if eq ( #x 0 ) then { print ( #x ) ; } "
+                        + "else { print ( #missing ) ; } ;");
+        TreeNode missing = findNameByParent(invalid, "#missing", "TERM");
+        SemanticException exception = assertThrows(
+                SemanticException.class,
+                () -> new SemanticAnalyzer().analyze(invalid.root, invalid.nodes));
+
+        assertEquals(missing.id, exception.nodeId);
+        assertEquals("undeclared variable #missing", exception.getMessage());
+    }
+
+    @Test
+    void namesInWhileLoopBodyResolve() {
+        Analysis analysis = analyze(
+                "#x : : while lesser ( #x 10 ) do { #x = add ( #x 1 ) ; } ;");
+        TreeNode declaration = findNameByParent(analysis, "#x", "V_DECL");
+        List<TreeNode> uses = findAllNameLeaves(analysis, "#x").stream()
+                .filter(node -> node.id != declaration.id)
+                .toList();
+
+        assertEquals(3, uses.size());
+        for (TreeNode use : uses) {
+            assertEquals(
+                    analysis.symbolTable.getSymbol(declaration.id).internalName,
+                    analysis.symbolTable.getBinding(use.id).internalName);
+        }
+    }
+
+    @Test
+    void localVariableResolvesInNumFunctionReturnTerm() {
+        Analysis analysis = analyze(
+                ": num #f ( ) { #local : : return ( #local ) } :");
+        TreeNode local = findNameByParent(analysis, "#local", "V_DECL");
+        TreeNode returnUse = findNameByParent(analysis, "#local", "TERM");
+
+        assertEquals(
+                analysis.symbolTable.getSymbol(local.id).internalName,
+                analysis.symbolTable.getBinding(returnUse.id).internalName);
+    }
+
+    @Test
+    void repeatedCallsBindToTheSameFunctionSymbol() {
+        Analysis analysis = analyze(
+                ": void #f ( ) { : : return } : #f ( ) ; #f ( ) ;");
+        List<TreeNode> calls = findNamesByParent(analysis, "#f", "CALL");
+
+        assertEquals(2, calls.size());
+        assertEquals(
+                analysis.symbolTable.getBinding(calls.get(0).id).internalName,
+                analysis.symbolTable.getBinding(calls.get(1).id).internalName);
+    }
+
     private Analysis analyze(String source) {
         Analysis analysis = parse(source);
         analysis.symbolTable = new SemanticAnalyzer().analyze(analysis.root, analysis.nodes);
@@ -193,6 +307,41 @@ class SemanticAnalyzerUseTest {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError(
                         "Could not find " + name + " with parent " + parentContents));
+    }
+
+    private List<TreeNode> findNamesByParent(Analysis analysis, String name, String parentContents) {
+        return analysis.nodes.values().stream()
+                .filter(node -> node.children.isEmpty() && name.equals(node.contents))
+                .filter(node -> node.parent != null)
+                .filter(node -> {
+                    TreeNode parent = analysis.nodes.get(node.parent);
+                    return parent != null && parentContents.equals(parent.contents);
+                })
+                .toList();
+    }
+
+    private List<TreeNode> findNamesInSubtree(Analysis analysis, TreeNode root) {
+        return findAllNameLeaves(analysis, "#x").stream()
+                .filter(node -> isDescendantOf(analysis, node, root))
+                .toList();
+    }
+
+    private List<TreeNode> findAllNameLeaves(Analysis analysis, String name) {
+        return analysis.nodes.values().stream()
+                .filter(node -> node.children.isEmpty() && name.equals(node.contents))
+                .toList();
+    }
+
+    private boolean isDescendantOf(Analysis analysis, TreeNode node, TreeNode ancestor) {
+        Integer parentId = node.parent;
+        while (parentId != null) {
+            if (parentId == ancestor.id) {
+                return true;
+            }
+            TreeNode parent = analysis.nodes.get(parentId);
+            parentId = parent == null ? null : parent.parent;
+        }
+        return false;
     }
 
     private TreeNode findNameInFunctionAlgo(Analysis analysis, String functionName, String name) {

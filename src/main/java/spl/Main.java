@@ -11,6 +11,8 @@ import spl.output.XmlTreeWriter;
 import spl.parser.NodeIdGenerator;
 import spl.parser.Parser;
 import spl.parser.ParserException;
+import spl.semantic.SemanticAnalyzer;
+import spl.semantic.SemanticException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -73,6 +75,17 @@ public class Main {
             return;
         }
 
+        try {
+            new SemanticAnalyzer().analyze(root, parser.getNodesById());
+        } catch (SemanticException e) {
+            System.err.println("Semantic error in " + inputPath.getFileName() + ":");
+            String nodeSuffix = e.nodeId == null ? "" : " (node " + e.nodeId + ")";
+            System.err.println("  " + e.getMessage() + nodeSuffix);
+            System.exit(1);
+            return;
+        }
+
+        System.out.println("Semantic analysis passed.");
         System.out.println("Parsed successfully. Wrote " + outputPath.toAbsolutePath());
     }
 
