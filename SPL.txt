@@ -1,7 +1,7 @@
-: : nop ;	                                passes both phases
-#x : : #x = 5 ; print ( #x ) ;	                passes
-#x : : #x = mod ( 5 2 ) ; #x = div ( 6 2 ) ;    A float-integer-conflict might perhaps be possible
-#x : : #x = mod ( 5.5 2 ) ;	                decimal not allowed with mod
-: num #f ( ) { : : return ( 1 ) } : #f ( ) ;	type error: a num call used as an instruction
-#x : void #p ( ) { : : return } : #x = #p ( ) ;	type error: void call used in a term
-: : #y = 1 ;	                                semantic error: undeclared variable (never reaches 2b)
+#x #y :
+num #inc ( #n ) { : : #n = add ( #n 1 ) ; return ( #n ) } :
+#x = 0 ;
+#y = #inc ( #x ) ;
+print ( #y ) ;
+if eq ( #x 0 ) then { print "isz" ; } else { print "notz" ; } ;
+while lesser ( #x 5 ) do { #x = add ( #x 1 ) ; print ( #x ) ; } ;
