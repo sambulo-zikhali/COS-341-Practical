@@ -74,12 +74,12 @@ public final class TypeAnalyser {
                 return set(n,Type.OK);
             }
             case "P": {
-                need(visit(kid(n,0)), Type.OK,n, "varisble declarations are not well-typed");
+                need(visit(kid(n,0)), Type.OK,n, "variable declarations are not well-typed");
                 need(visit(kid(n,2)), Type.OK,n, "function declarations are not well-typed");
                 need(visit(kid(n,4)), Type.OK,n, "algorithm is not well-typed");
                 return set(n,Type.OK);
             }
-            case "V_DECLS": {
+            case "V_DECL": {
                 if(n.children.isEmpty()) return set(n,Type.OK);
                 need(visit(kid(n,1)),Type.OK,n, "variable declarations are not well-typed");
                 setNameType(kid(n,0), Type.NUMERIC);
@@ -88,7 +88,7 @@ public final class TypeAnalyser {
             case "F_DECL": {
                 if(n.children.isEmpty()) return set(n,Type.OK);
                 need(visit(kid(n,0)), Type.OK,n, "function is not well-typed");
-                need(visit(kid(n,2)), Type.OK,n, "function declarations are not well-typed");
+                need(visit(kid(n,1)), Type.OK,n, "function declarations are not well-typed");
                 return set(n,Type.OK);
             }
             case "F_TYPE": 
@@ -101,7 +101,7 @@ public final class TypeAnalyser {
             }
             case "OUTP":{
                 if(n.children.size() == 3) {
-                    need(visit(kid(n,1)), Type.OK,n, "print (....) needs a numeric term");
+                    need(visit(kid(n,1)), Type.NUMERIC,n, "print (....) needs a numeric term");
                 }
                 return set(n,Type.OK);
             }
@@ -109,7 +109,7 @@ public final class TypeAnalyser {
                 return visitInstr(n);
             }
             case "CALL": {
-                need(visit(kid(n,0)), Type.OK,n, "function call has badly typed arguments");
+                need(visit(kid(n,2)), Type.OK,n, "function call has badly typed arguments");
                 TreeNode name= kid(n,0);
                 Type t = funcType(name);
                 if(t == Type.UNKNOWN) {
@@ -161,7 +161,7 @@ public final class TypeAnalyser {
         boolean isNum = kid(n,0).contents.equals("num");
         TreeNode name = kid(n,1);
         need(visit(kid(n,3)), Type.OK,n, "function parameters are not well-typed");
-        need(visit(kid(n,6)), Type.OK,n, "function return type is not well-typed");
+        need(visit(kid(n,6)), Type.OK,n, "function body is not well-typed");
         if(isNum) {
             need(visit(kid(n,9)), Type.NUMERIC,n, "num function '"+name.contents+"' must return a numeric term");
             setNameType(name, Type.NUMERIC);
@@ -178,13 +178,8 @@ public final class TypeAnalyser {
         switch(first.contents) {
             case "print" -> {
                 need(visit(kid(n,1)), Type.OK,n, "print argument is not well-typed");
-                break;
             }
-            case "nop" -> {
-            }
-            case "comment" -> {
-                break;
-            }
+            case "nop", "comment" -> { }
             default -> {
                 Type t = visit(first);
                 if(first.contents.equals("CALL")) {
@@ -207,11 +202,11 @@ public final class TypeAnalyser {
         }
         switch(c)  {
             case "mod": case "div": case "add": case "sub": case "mul":
-                need(visit(kid(n,2)), Type.NUMERIC,n, "first operand of '"+c+"' must be numereic");
-                need(visit(kid(n,3)), Type.NUMERIC,n, "second operand of '"+c+"' must be numereic");
+                need(visit(kid(n,2)), Type.NUMERIC,n, "first operand of '"+c+"' must be numeric");
+                need(visit(kid(n,3)), Type.NUMERIC,n, "second operand of '"+c+"' must be numeric");
                 return set(n,Type.NUMERIC);
             case "neg":
-                need(visit(kid(n,2)), Type.NUMERIC,n, "operand of 'neg' must be numereic");
+                need(visit(kid(n,2)), Type.NUMERIC,n, "operand of 'neg' must be numeric");
                 return set(n,Type.NUMERIC);
             default:
                 if(c.startsWith("#")) {
@@ -260,10 +255,6 @@ public final class TypeAnalyser {
         if(actual != wanted) {
             throw new TypeException(where.id, "Type error: "+msg+" (expected "+wanted+", got "+actual+")");
         }
-    }
-
-    private Type nameType(TreeNode nameLeaf) {
-        return Type.fromString(symbolOf(nameLeaf).getType());
     }
 
     private void setNameType(TreeNode nameLeaf, Type t) {
