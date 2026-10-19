@@ -135,6 +135,13 @@ public class Lexer {
             return new Token(symbol, text, line);
         }
 
+        // NEW: friendlier message for things that look like numbers
+        if (text.matches("[-\u2013]?[0-9].*")) {
+            throw new LexerException("Invalid number '" + text + "' at line " + line
+                    + ". Hint: numbers cannot have leading zeros (01), a negative zero (-0), "
+                    + "or trailing zeros after the decimal point (1.20, 0.0).");
+        }
+
         throw new LexerException("Unrecognized token '" + text + "' at line " + line);
     }
 
