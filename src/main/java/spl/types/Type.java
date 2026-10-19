@@ -1,7 +1,7 @@
 package spl.types;
 
 public enum Type {
-    UNKNOWN, OK, NUMERIC, PROCEDURE;
+    UNKNOWN, OK, NUMERIC, BOOLEAN ,PROCEDURE;
 
     @Override 
     public String toString() {
