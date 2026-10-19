@@ -88,8 +88,8 @@ public class Main {
             return;
         }
 
-        System.out.println("Semantic analysis passed.");
-        System.out.println("Parsed successfully. Wrote " + outputPath.toAbsolutePath());
+        // System.out.println("Semantic analysis passed.");
+        // System.out.println("Parsed successfully. Wrote " + outputPath.toAbsolutePath());
 
         SymbolTable symbols;
         try {
