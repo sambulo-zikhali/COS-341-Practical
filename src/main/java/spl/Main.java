@@ -13,6 +13,9 @@ import spl.parser.Parser;
 import spl.parser.ParserException;
 import spl.semantic.SemanticAnalyzer;
 import spl.semantic.SemanticException;
+import spl.semantic.SymbolTable;
+import spl.types.TypeAnalyser;
+import spl.types.TypeException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -85,8 +88,41 @@ public class Main {
             return;
         }
 
+        // System.out.println("Semantic analysis passed.");
+        // System.out.println("Parsed successfully. Wrote " + outputPath.toAbsolutePath());
+
+        SymbolTable symbols;
+        try {
+            symbols = new SemanticAnalyzer().analyze(root, parser.getNodesById());
+        } catch (TypeException e) {
+            System.err.println("Type error in " + inputPath.getFileName() + ":");
+            String nodeSuffix = e.getNodeId() == -1 ? "" : " (node " + e.getNodeId() + ")";
+            System.err.println("  " + e.getMessage() + nodeSuffix);
+            System.exit(1);
+            return;
+        }
+        catch (SemanticException e) 
+        {
+            System.err.println("Semantic error in " + inputPath.getFileName() + ":");
+            String nodeSuffix = e.nodeId == null ? "" : " (node " + e.nodeId + ")";
+            System.err.println("  " + e.getMessage() + nodeSuffix);
+            System.exit(1);
+            return;
+        }
         System.out.println("Semantic analysis passed.");
-        System.out.println("Parsed successfully. Wrote " + outputPath.toAbsolutePath());
+
+        try{
+            new TypeAnalyser(parser.getNodesById(), symbols, grammar).analyse(root);
+        }
+        catch(TypeException e)
+        {
+            System.err.println("Type error in " + inputPath.getFileName() + ":");
+            System.err.println("  " + e.getMessage());
+            System.exit(1);
+            return;
+        }
+        System.out.println("Type analysis passed.");
+        System.out.println("Parsed successfully. Wrote "+outputPath.toAbsolutePath());
     }
 
     /**
@@ -99,4 +135,5 @@ public class Main {
         }
         return Path.of("SPL.txt");
     }
+
 }

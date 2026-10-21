@@ -39,4 +39,17 @@ public final class Symbol {
         this.scopeId = scopeId;
         this.isParameter = isParameter;
     }
+
+    private String type = "unknown";
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        if (type == null || type.isBlank()) {
+            throw new IllegalArgumentException("type must not be blank");
+        }
+        this.type = type;
+    }
 }
