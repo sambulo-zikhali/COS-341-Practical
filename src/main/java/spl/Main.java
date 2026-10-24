@@ -23,8 +23,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Entry point: reads an SPL source file, parses it, and either writes
- * tree.xml on success or prints a meaningful syntax error on failure.
+ * Entry point: reads an SPL source file, parses and checks it, then writes
+ * tree.xml on success or prints a meaningful error on failure.
  *
  * Usage: java -jar group-23.jar SPL.txt
  *        (or with no args, looks for SPL.txt in the current directory)
@@ -68,18 +68,9 @@ public class Main {
             return;
         }
 
-        Path outputPath = Path.of("tree.xml");
+        SymbolTable symbols;
         try {
-            new XmlTreeWriter(grammar).write(root, parser.getNodesById(), outputPath);
-        } catch (IOException e) {
-            System.err.println("Parsed successfully, but failed to write tree.xml:");
-            System.err.println("  " + e.getMessage());
-            System.exit(1);
-            return;
-        }
-
-        try {
-            new SemanticAnalyzer().analyze(root, parser.getNodesById());
+            symbols = new SemanticAnalyzer().analyze(root, parser.getNodesById());
         } catch (SemanticException e) {
             System.err.println("Semantic error in " + inputPath.getFileName() + ":");
             String nodeSuffix = e.nodeId == null ? "" : " (node " + e.nodeId + ")";
@@ -88,12 +79,9 @@ public class Main {
             return;
         }
 
-        // System.out.println("Semantic analysis passed.");
-        // System.out.println("Parsed successfully. Wrote " + outputPath.toAbsolutePath());
-
-        SymbolTable symbols;
+        TypeAnalyser types = new TypeAnalyser(parser.getNodesById(), symbols, grammar);
         try {
-            symbols = new SemanticAnalyzer().analyze(root, parser.getNodesById());
+            types.analyse(root);
         } catch (TypeException e) {
             System.err.println("Type error in " + inputPath.getFileName() + ":");
             String nodeSuffix = e.getNodeId() == -1 ? "" : " (node " + e.getNodeId() + ")";
@@ -101,28 +89,19 @@ public class Main {
             System.exit(1);
             return;
         }
-        catch (SemanticException e) 
-        {
-            System.err.println("Semantic error in " + inputPath.getFileName() + ":");
-            String nodeSuffix = e.nodeId == null ? "" : " (node " + e.nodeId + ")";
-            System.err.println("  " + e.getMessage() + nodeSuffix);
-            System.exit(1);
-            return;
-        }
-        System.out.println("Semantic analysis passed.");
 
-        try{
-            new TypeAnalyser(parser.getNodesById(), symbols, grammar).analyse(root);
-        }
-        catch(TypeException e)
-        {
-            System.err.println("Type error in " + inputPath.getFileName() + ":");
+        Path outputPath = Path.of("tree.xml");
+        try {
+            new XmlTreeWriter(grammar).write(root, parser.getNodesById(), outputPath);
+        } catch (IOException e) {
+            System.err.println("Parsed and checked successfully, but failed to write tree.xml:");
             System.err.println("  " + e.getMessage());
             System.exit(1);
             return;
         }
+        System.out.println("Semantic analysis passed.");
         System.out.println("Type analysis passed.");
-        System.out.println("Parsed successfully. Wrote "+outputPath.toAbsolutePath());
+        System.out.println("Wrote " + outputPath.toAbsolutePath());
     }
 
     /**
