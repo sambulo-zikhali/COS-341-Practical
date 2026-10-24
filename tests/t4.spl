@@ -1,0 +1,1 @@
+#a : num #sq ( #x ) { : : return ( mul ( #x #x ) ) } void #show ( #v ) { : : print ( #v ) ; return } : #a = #sq ( 3 ) ; #show ( #a ) ; #show ( #sq ( add ( #a 1 ) ) ) ;

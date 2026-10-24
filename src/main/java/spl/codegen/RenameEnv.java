@@ -1,6 +1,5 @@
 package spl.codegen;
 
-public class RenameEnv {
-    
+public class RenameEnv { 
 }
 src/test/java/spl/parser

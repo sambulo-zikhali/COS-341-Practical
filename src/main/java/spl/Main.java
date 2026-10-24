@@ -113,18 +113,12 @@ public class Main {
         }
         System.out.println("Semantic analysis passed.");
 
-        try{
-            new TypeAnalyser(parser.getNodesById(), symbols, grammar).analyse(root);
+        TypeAnalyser analyser = new TypeAnalyser(parser.getNodesById(), symbols, grammar);
+        try {
+
+        }catch (TypeException e) {
+            System.out.println("Type error in "+ inputPath.getFileName() + ":");
         }
-        catch(TypeException e)
-        {
-            System.err.println("Type error in " + inputPath.getFileName() + ":");
-            System.err.println("  " + e.getMessage());
-            System.exit(1);
-            return;
-        }
-        System.out.println("Type analysis passed.");
-        System.out.println("Parsed successfully. Wrote "+outputPath.toAbsolutePath());
     }
 
     /**
