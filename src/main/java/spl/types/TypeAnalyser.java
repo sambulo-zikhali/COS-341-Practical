@@ -37,6 +37,10 @@ public final class TypeAnalyser {
         visit(root);
     }
 
+    public NumericKind getNumericKind() {
+        return kind;
+    }
+
     public Type getNodeType(int nodeId) {
         return nodeTypes.getOrDefault(nodeId, Type.UNKNOWN);
     }

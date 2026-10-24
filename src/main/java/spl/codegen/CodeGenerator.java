@@ -1,5 +1,23 @@
 package spl.codegen;
 
-public class CodeGenerator {
-    
+import spl.model.TreeNode;
+import spl.semantic.SymbolTable;
+import spl.types.NumericKind;
+
+import java.util.Map;
+
+public final class CodeGenerator {
+    private CodeGenerator() { }
+
+    public static String generate(TreeNode root,Map<Integer,TreeNode>nodes,SymbolTable symbols,NumericKind kind) {
+        CodegenContext ctx = new CodegenContext(nodes,symbols,kind);
+        ctx.program = new ProgramTranslator(ctx);
+        ctx.bool = new BoolTranslator(ctx);
+        ctx.algo = new AlgoTranslator(ctx);
+        ctx.calls = new CallInLiner(ctx);
+        ctx.term = new TermTransltor(ctx);
+        ctx.funcs= new FunctionTranslaator(ctx);
+        ctx.program.transProgram(root);
+        return ctx.out.toSytring();
+    }
 }
