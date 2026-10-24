@@ -13,14 +13,17 @@ import java.util.Set;
  * Phase 2b: bottom-up type analysis
  * of rule table. Throws TypeException on the first violation.
  */
+
+
 public final class TypeAnalyser {
     public static final String FLOAT_INT_CONFLICT = "A float-integer-conflict might perhaps be possible";
 
     private final Map<Integer, TreeNode> nodes;
     private final SymbolTable symbols;
     private final Set<String> nonTerminals;
-
     private final Map<Integer, Type> nodeTypes = new HashMap<>();
+
+    private NumericKind kind = NumericKind.INT;
 
     public TypeAnalyser(Map<Integer,TreeNode> nodesById, SymbolTable symbols, Grammar grammar) {
         this.nodes = nodesById;
@@ -45,25 +48,26 @@ public final class TypeAnalyser {
     //crud mod/div
 
     private void preCheck() {
-        boolean hasMod = false, hasDiv = false;
-        for (TreeNode n : nodes.values()) {
-            if(isLeaf(n)) {
-                if (n.contents.equals("mod")) hasMod = true;
-                if (n.contents.equals("div")) hasDiv = true;
-            }
+        boolean hasMod = false, hasDiv = false,hasDecimal = false;
+        for(TreeNode n: nodes.values()) {
+            if(!isLeaf(n)) continue;
+            if(n.contents.equals("mod")) hasMod = true;
+            if(n.contents.equals("div")) hasDiv = true;
+            if(isNumLeaf(n) && n.contents.contains(".")) hasDecimal = true;
         }
         if(hasMod && hasDiv) {
             throw new TypeException(FLOAT_INT_CONFLICT);
         }
-        if(hasMod) {
+        if (hasMod && hasDecimal) {
             for(TreeNode n : nodes.values()) {
                 if(isLeaf(n) && isNumLeaf(n) && n.contents.contains(".")) {
-                    throw new TypeException(n.id, "Decimal number '"+n.contents
-                    +"' is not allowed because the program uses 'mod' "
-                    +"(all numbers must then be integers)");
+                    throw new TypeException(n.id, "Decimal number '"+ n.contents +"' is not allowed because the program uses 'mod' "+ "(all numbers must thenbe integers)");
                 }
             }
         }
+        if (hasMod) kind = NumericKind.INT;
+        else if (hasDiv || hasDecimal) kind = NumericKind.FLOAT;
+        else kind = NumericKind.INT;
     }
     //tree caller
 
@@ -115,6 +119,7 @@ public final class TypeAnalyser {
                 if(t == Type.UNKNOWN) {
                     throw new TypeException(name.id, "Call to '"+name.contents+"' whose type is unknown "+"(is it a declared function?)");
                 }
+                checkArity(name, kid(n,2));
                 return set(n,t);
             }
             case "INPUT": {
@@ -232,6 +237,25 @@ public final class TypeAnalyser {
         }
         return set(n,Type.BOOLEAN);
     }
+
+    private int countList(TreeNode list) {
+        int count =0;
+        for (TreeNode curr = list; !curr.children.isEmpty(); curr = kid(curr,1)) count++;
+        return count;
+    }
+
+    private void checkArity(TreeNode nameLeaf, TreeNode input) {
+        Symbol f = symbolOf(nameLeaf);
+        TreeNode declLeaf = nodes.get(f.declarationNodeId);
+        TreeNode fType = declLeaf.parent == null ?null: nodes.get(declLeaf.parent);
+        if( fType == null || !fType.contents.equals("F_TYPE")) return;
+        int expected = countList(kid(fType,3));
+        int given =countList(input);
+        if(expected != given) {
+            throw new TypeException(nameLeaf.id,"Function '" + nameLeaf.contents + "' expects " + expected + " argument(s) but is called with "+given);
+        }
+    }
+
 
     //HELPERS
     private TreeNode kid(TreeNode n,int i) {

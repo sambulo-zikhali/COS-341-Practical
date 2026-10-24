@@ -16,6 +16,8 @@ import spl.semantic.SemanticException;
 import spl.semantic.SymbolTable;
 import spl.types.TypeAnalyser;
 import spl.types.TypeException;
+import spl.codegen.CodeGenerator;
+import spl.types.NumericKind;
 
 import java.io.IOException;
 import java.nio.file.Files;
