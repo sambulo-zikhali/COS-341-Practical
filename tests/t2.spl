@@ -1,0 +1,1 @@
+#n #s : : #n = 5 ; #s = 0 ; while larger ( #n 0 ) do { #s = add ( #s #n ) ; #n = sub ( #n 1 ) ; } ; print ( #s ) ;

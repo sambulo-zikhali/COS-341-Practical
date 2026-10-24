@@ -16,6 +16,8 @@ import spl.semantic.SemanticException;
 import spl.semantic.SymbolTable;
 import spl.types.TypeAnalyser;
 import spl.types.TypeException;
+import spl.codegen.CodeGenerator;
+import spl.types.NumericKind;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -78,28 +80,9 @@ public class Main {
             return;
         }
 
-        try {
-            new SemanticAnalyzer().analyze(root, parser.getNodesById());
-        } catch (SemanticException e) {
-            System.err.println("Semantic error in " + inputPath.getFileName() + ":");
-            String nodeSuffix = e.nodeId == null ? "" : " (node " + e.nodeId + ")";
-            System.err.println("  " + e.getMessage() + nodeSuffix);
-            System.exit(1);
-            return;
-        }
-
-        // System.out.println("Semantic analysis passed.");
-        // System.out.println("Parsed successfully. Wrote " + outputPath.toAbsolutePath());
-
         SymbolTable symbols;
         try {
             symbols = new SemanticAnalyzer().analyze(root, parser.getNodesById());
-        } catch (TypeException e) {
-            System.err.println("Type error in " + inputPath.getFileName() + ":");
-            String nodeSuffix = e.getNodeId() == -1 ? "" : " (node " + e.getNodeId() + ")";
-            System.err.println("  " + e.getMessage() + nodeSuffix);
-            System.exit(1);
-            return;
         }
         catch (SemanticException e) 
         {
@@ -111,18 +94,28 @@ public class Main {
         }
         System.out.println("Semantic analysis passed.");
 
-        try{
-            new TypeAnalyser(parser.getNodesById(), symbols, grammar).analyse(root);
-        }
-        catch(TypeException e)
-        {
-            System.err.println("Type error in " + inputPath.getFileName() + ":");
-            System.err.println("  " + e.getMessage());
+        TypeAnalyser analyser = new TypeAnalyser(parser.getNodesById(), symbols, grammar);
+        try {
+            analyser.analyse(root);
+
+        }catch (TypeException e) {
+            System.out.println("Type error in "+ inputPath.getFileName() + ":");
+            System.out.println(" "+e.getMessage());
             System.exit(1);
             return;
         }
         System.out.println("Type analysis passed.");
-        System.out.println("Parsed successfully. Wrote "+outputPath.toAbsolutePath());
+
+        String cpp = CodeGenerator.generate(root,parser.getNodesById(),symbols,analyser.getNumericKind());
+        Path cppPath = Path.of("output.cpp");
+        try {
+            Files.writeString(cppPath,cpp);
+        }catch(IOException e) {
+            System.err.println("Could not write output.cpp: "+ e.getMessage());
+            System.exit(1);
+            return;
+        }
+        System.out.println("Wrote "+ cppPath.toAbsolutePath());
     }
 
     /**
