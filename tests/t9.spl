@@ -1,0 +1,1 @@
+#a #b : void #swapshow ( #x #y ) { : : print ( #x ) ; print ( #y ) ; return } : #a = 1 ; #b = 2 ; #swapshow ( #b #a ) ; #swapshow ( #a #b ) ; comment "done" ; nop ;

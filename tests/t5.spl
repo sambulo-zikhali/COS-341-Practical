@@ -1,0 +1,1 @@
+#r #total : num #count ( #n ) { #i : : #i = 0 ; while lesser ( #i #n ) do { #i = add ( #i 1 ) ; #total = add ( #total 1 ) ; } ; return ( #i ) } : #total = 0 ; #r = mul ( #count ( 3 ) #count ( 5 ) ) ; print ( #r ) ; print "x" ; print ( #total ) ;
