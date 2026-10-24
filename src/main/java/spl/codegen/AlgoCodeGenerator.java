@@ -39,7 +39,8 @@ public class AlgoCodeGenerator {
      */
     public void transAlgo(TreeNode node) {
         if (node.children.isEmpty()) {
-            return; 
+            emit("/* end */");
+            return;
         }
         
         // ALGO -> INSTR ; ALGO
@@ -56,13 +57,13 @@ public class AlgoCodeGenerator {
 
         switch (type) {
             case "print":
-                transPrint(inner);
+                transPrint(node);
                 break;
             case "nop":
                 emit("/* nop */");
                 break;
             case "comment":
-                TreeNode strNode = getNode(inner.children.get(1));
+                TreeNode strNode = getNode(node.children.get(1));
                 emit("/* " + strNode.contents + " */");
                 break;
             case "ASSIGN":
@@ -86,7 +87,7 @@ public class AlgoCodeGenerator {
     private void transPrint(TreeNode node) {
         TreeNode outp = getNode(node.children.get(1));
         
-        if (outp.contents.equals("STRING")) {
+        if (outp.children.size() == 1) {
             TreeNode strNode = getNode(outp.children.get(0));
             // Note: SPL strings include quotes, so we just print them directly.
             emit("std::cout << " + strNode.contents + ";");
@@ -112,19 +113,17 @@ public class AlgoCodeGenerator {
     }
 
     private void transTerm(TreeNode node, String resultVar) {
-        String type = node.contents;
+        String type = getNode(node.children.get(0)).contents;
+        if (type.startsWith("#")) {
+            emit(resultVar + " = " + lookupName(getNode(node.children.get(0))) + ";");
+            return;
+        }
+        if (type.matches("[-\\u2013]?[0-9]+(\\.[0-9]+)?")) {
+            emit(resultVar + " = " + type.replace('\u2013', '-') + ";");
+            return;
+        }
 
         switch (type) {
-            case "NAME":
-                TreeNode nameNode = getNode(node.children.get(0));
-                emit(resultVar + " = " + lookupName(nameNode) + ";");
-                break;
-                
-            case "NUM":
-                TreeNode numNode = getNode(node.children.get(0));
-                emit(resultVar + " = " + numNode.contents + ";");
-                break;
-                
             case "add":
             case "sub":
             case "mul":
@@ -176,58 +175,47 @@ public class AlgoCodeGenerator {
 
         emit("/* if */");
         transBool(boolNode, la, lb);
-        emit(lb + ": /* else */");
+        emit(lb + ": ; /* else */");
         transAlgo(falseAlgo);
         emit("goto " + lc + ";");
-        emit(la + ": /* then */");
+        emit(la + ": ; /* then */");
         transAlgo(trueAlgo);
-        emit(lc + ": /* continue */");
+        emit(lc + ": ; /* continue */");
     }
 
     private void transLoop(TreeNode node) {
         String startLabel = nextLabel();
+        String bodyLabel = nextLabel();
         String endLabel = nextLabel();
-        String dummyLabel = nextLabel();
 
         if (getNode(node.children.get(0)).contents.equals("COND")) {
             TreeNode condNode = getNode(node.children.get(0));
             TreeNode boolNode = getNode(node.children.get(1));
             TreeNode algoNode = getNode(node.children.get(4));
 
-            emit(startLabel + ":");
-            
             boolean isUntil = getNode(condNode.children.get(0)).contents.equals("until");
-            
-            if (isUntil) {
-                transBool(boolNode, endLabel, dummyLabel);
-            } else {
-                transNot(boolNode, endLabel, dummyLabel);
-            }
-
+            emit(startLabel + ": ; /* condition */");
+            transBool(boolNode, isUntil ? endLabel : bodyLabel,
+                    isUntil ? bodyLabel : endLabel);
+            emit(bodyLabel + ": ; /* do */");
             transAlgo(algoNode);
             emit("goto " + startLabel + ";");
-            emit(endLabel + ":");
-            
         } else {
-            TreeNode algoNode = getNode(node.children.get(1));
+            TreeNode algoNode = getNode(node.children.get(2));
             TreeNode condNode = getNode(node.children.get(4));
             TreeNode boolNode = getNode(node.children.get(5));
 
-            emit(startLabel + ":");
+            emit(startLabel + ": ; /* do */");
             transAlgo(algoNode);
-            
             boolean isUntil = getNode(condNode.children.get(0)).contents.equals("until");
-            if (isUntil) {
-                transNot(boolNode, startLabel, dummyLabel);
-            } else {
-                transBool(boolNode, startLabel, dummyLabel);
-            }
-            emit(endLabel + ":");
+            transBool(boolNode, isUntil ? endLabel : startLabel,
+                    isUntil ? startLabel : endLabel);
         }
+        emit(endLabel + ": ; /* exit */");
     }
 
     private void transBool(TreeNode node, String targetLabel, String dummyLabel) {
-        String type = node.contents;
+        String type = getNode(node.children.get(0)).contents;
         
         switch (type) {
             case "not":
@@ -236,13 +224,17 @@ public class AlgoCodeGenerator {
             case "and":
                 TreeNode b1 = getNode(node.children.get(2));
                 TreeNode b2 = getNode(node.children.get(3));
-                transNot(b1, dummyLabel, targetLabel);
-                transNot(b2, dummyLabel, targetLabel);
+                String andNext = nextLabel();
+                transBool(b1, andNext, dummyLabel);
+                emit(andNext + ": ;");
+                transBool(b2, targetLabel, dummyLabel);
                 break;
             case "or":
                 TreeNode b3 = getNode(node.children.get(2));
                 TreeNode b4 = getNode(node.children.get(3));
-                transBool(b3, targetLabel, dummyLabel);
+                String orNext = nextLabel();
+                transBool(b3, targetLabel, orNext);
+                emit(orNext + ": ;");
                 transBool(b4, targetLabel, dummyLabel);
                 break;
             case "eq":
@@ -259,6 +251,7 @@ public class AlgoCodeGenerator {
                 transTerm(t1, temp1);
                 transTerm(t2, temp2);
                 emit("if (" + temp1 + " " + op + " " + temp2 + ") goto " + targetLabel + ";");
+                emit("goto " + dummyLabel + ";");
                 break;
             default:
                 throw new CodeGenException(node.id, "Unknown BOOL type: " + type);
@@ -266,34 +259,8 @@ public class AlgoCodeGenerator {
     }
 
     private void transNot(TreeNode node, String targetLabel, String dummyLabel) {
-        String type = node.contents;
-        
-        if (type.equals("not")) {
-            TreeNode inner = getNode(node.children.get(2));
-            transBool(inner, targetLabel, dummyLabel);
-        } else if (type.equals("and")) {
-            TreeNode b1 = getNode(node.children.get(2));
-            TreeNode b2 = getNode(node.children.get(3));
-            transNot(b1, targetLabel, dummyLabel);
-            transNot(b2, targetLabel, dummyLabel);
-        } else if (type.equals("or")) {
-            TreeNode b1 = getNode(node.children.get(2));
-            TreeNode b2 = getNode(node.children.get(3));
-            transNot(b1, dummyLabel, targetLabel);
-            transNot(b2, dummyLabel, targetLabel);
-        } else {
-            String op = type.equals("eq") ? "!=" : type.equals("larger") ? "<=" : ">=";
-            TreeNode t1 = getNode(node.children.get(2));
-            TreeNode t2 = getNode(node.children.get(3));
-            String temp1 = nextTempVar();
-            String temp2 = nextTempVar();
-            
-            emit(getCType() + " " + temp1 + ";");
-            emit(getCType() + " " + temp2 + ";");
-            transTerm(t1, temp1);
-            transTerm(t2, temp2);
-            emit("if (" + temp1 + " " + op + " " + temp2 + ") goto " + targetLabel + ";");
-        }
+        TreeNode inner = getNode(node.children.get(2));
+        transBool(inner, dummyLabel, targetLabel);
     }
 
     //  Helpers 
@@ -328,13 +295,16 @@ public class AlgoCodeGenerator {
     private String getCType() {
         if (globalCType != null) return globalCType;
         
-        boolean hasMod = false, hasDiv = false;
+        boolean hasMod = false, hasDiv = false, hasDecimal = false;
         for (TreeNode n : nodesById.values()) {
             if (n.contents.equals("mod")) hasMod = true;
             if (n.contents.equals("div")) hasDiv = true;
+            if (n.children.isEmpty() && n.contents.matches("[-\\u2013]?[0-9]+\\.[0-9]+")) {
+                hasDecimal = true;
+            }
         }
         
-        globalCType = hasMod ? "int" : (hasDiv ? "float" : "int");
+        globalCType = hasMod ? "int" : (hasDiv || hasDecimal ? "float" : "int");
         return globalCType;
     }
 }

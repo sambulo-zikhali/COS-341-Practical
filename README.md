@@ -1,8 +1,8 @@
 # COS341 Prac
 
-Takes a plain-text `SPL.txt` file and
-produces either a syntax error with hints, or a `tree.xml` file containing
-the program's full syntax tree.
+Takes a plain-text `SPL.txt` file and produces either a lexical, syntax,
+semantic, or type error, or a `tree.xml` file containing the program's
+full syntax tree.
 
 ## What this does
 
@@ -72,7 +72,6 @@ The full SPL lexical spec and context-free grammar are in
   instead.
 
 ## Testing
-(we'll see how well things are going, then decide if we add these or not)
 ```bash
 mvn test
 ```
@@ -83,8 +82,8 @@ mvn test
   (`V_DECL`, `F_DECL`, `ALGO`).
 - `ParserTest` — shift/reduce driving logic on small token sequences.
 - `XmlTreeWriterTest` — output format checks against a mock tree.
-- `EndToEndTest` — full pipeline test: sample `SPL.txt` in, `tree.xml`
-  out, diffed against an expected tree.
+- `EndToEndTest` — sample SPL source through parsing and XML validation.
+- `PhaseIntegrationTest` — scope, type, and Phase 3a ALGO translation checks.
 
 ## Notes
 
@@ -94,3 +93,5 @@ mvn test
 - Unique node IDs matter beyond this practical: later phases link tree
   nodes to a semantic data table (name-scope analysis, type-checking)
   using these IDs as foreign keys.
+- `Main` runs scope and type analysis before writing `tree.xml`. Phase 3a
+  ALGO translation is exercised by tests; function calls await Phase 3b.
