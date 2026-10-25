@@ -85,7 +85,7 @@ public final class BoolTranslator {
 
             if(isUntil) transBool(bool,le,ld,env);
             else transBool(bool, ld, le, env);
-            out.line(le4,"exit")
+            out.line(le,"exit")
         }
     }
 }
