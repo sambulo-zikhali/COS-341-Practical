@@ -19,6 +19,10 @@ public final class FunctionTranslator {
     private final TermTranslator terms;
     private final BodyTranslator body;
 
+    public FunctionTranslator(CodegenContext ctx) {
+        this(ctx.out, ctx.names, ctx.nodes, ctx.symbols, ctx.kind, ctx.term, ctx.program);
+    }
+
     public FunctionTranslator(
             Emitter out,
             NameGen names,

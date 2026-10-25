@@ -37,7 +37,7 @@ public class AlgoTranslator {
                 ctx.out.line("/* " + Emitter.stringLiteral(strNode.contents) + " */");
                 break;
             case "ASSIGN":
-                ctx.term.transAssign(inner, env);
+                ctx.assign.transAssign(inner, env);
                 break;
             case "BRANCH":
                 ctx.bool.transBranch(inner, env);

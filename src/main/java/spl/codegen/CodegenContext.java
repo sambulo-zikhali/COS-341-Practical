@@ -21,6 +21,7 @@ public final class CodegenContext {
     public AlgoTranslator algo;
     public CallInLiner calls;
     public TermTranslator term;
+    public AssignTranslator assign;
     public FunctionTranslator funcs;
 
     public CodegenContext(Map<Integer,TreeNode> nodes, SymbolTable symbols,NumericKind kind) {

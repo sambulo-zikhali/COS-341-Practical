@@ -20,7 +20,7 @@ class AssignTranslatorTest {
     @Test
     void translatesLiteralAssignmentWithDeclarationAndStore() {
         Parsed parsed = parse("#x : : #x = 5 ;");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         NameGen names = new NameGen();
         AssignTranslator translator = translator(parsed, output, names, NumericKind.INT);
 
@@ -32,7 +32,7 @@ class AssignTranslatorTest {
     @Test
     void translatesAssignmentExpression() {
         Parsed parsed = parse("#x #y : : #x = add ( #y 1 ) ;");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         AssignTranslator translator = translator(parsed, output, new NameGen(), NumericKind.INT);
 
         translator.transAssign(assignment(parsed), new RenameEnv());
@@ -51,7 +51,7 @@ class AssignTranslatorTest {
     @Test
     void appliesRenameEnvironmentToTargetAndSourceNames() {
         Parsed parsed = parse("#x #y : : #x = add ( #y 1 ) ;");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         RenameEnv env = new RenameEnv();
         env.put("v0", "v0_c1");
         env.put("v1", "v1_p1");
@@ -73,7 +73,7 @@ class AssignTranslatorTest {
     @Test
     void usesFloatTypeForFloatNumericKind() {
         Parsed parsed = parse("#x : : #x = 5 ;");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("float");
         AssignTranslator translator = translator(parsed, output, new NameGen(), NumericKind.FLOAT);
 
         translator.transAssign(assignment(parsed), new RenameEnv());
@@ -85,7 +85,7 @@ class AssignTranslatorTest {
     void assigningFromCallPropagatesUnsupportedOperation() {
         Parsed parsed = parse(
                 "#x : num #f ( #a ) { : : return ( #a ) } : #x = #f ( 1 ) ;");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         AssignTranslator translator = translator(parsed, output, new NameGen(), NumericKind.INT);
         boolean rejected = false;
 
@@ -103,7 +103,7 @@ class AssignTranslatorTest {
     @Test
     void sharesTemporaryCounterWithTermTranslation() {
         Parsed parsed = parse("#x : : #x = add ( 1 2 ) ;");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         NameGen names = new NameGen();
         AssignTranslator translator = translator(parsed, output, names, NumericKind.INT);
 

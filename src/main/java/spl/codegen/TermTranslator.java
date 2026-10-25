@@ -14,10 +14,9 @@ public final class TermTranslator {
     private final Map<Integer, TreeNode> nodes;
     private final SymbolTable symbols;
     private final String cType;
-    private final CodegenContext ctx;
 
-        public TermTranslator(CodegenContext ctx) {
-        this.ctx = ctx;
+    public TermTranslator(CodegenContext ctx) {
+        this(ctx.out, ctx.names, ctx.nodes, ctx.symbols, ctx.kind);
     }
     public TermTranslator(
             Emitter out,

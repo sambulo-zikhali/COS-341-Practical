@@ -13,9 +13,10 @@ public final class CodeGenerator {
         CodegenContext ctx = new CodegenContext(nodes,symbols,kind);
         ctx.program = new ProgramTranslator(ctx);
         ctx.bool = new BoolTranslator(ctx);
+        ctx.term = new TermTranslator(ctx);
+        ctx.assign = new AssignTranslator(ctx);
         ctx.algo = new AlgoTranslator(ctx);
         ctx.calls = new CallInLiner(ctx);
-        ctx.term = new TermTranslator(ctx);
         ctx.funcs= new FunctionTranslator(ctx);
         ctx.program.transProgram(root);
         return ctx.out.toString();

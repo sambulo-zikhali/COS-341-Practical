@@ -24,7 +24,7 @@ class FunctionTranslatorTest {
     @Test
     void translatesVoidProcedureWithParameters() {
         Parsed parsed = parse(": void #f ( #a #b ) { : : return } :");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         RecordingBody body = new RecordingBody(output);
         FunctionTranslator translator = translator(parsed, output, new NameGen(), NumericKind.INT, body);
         TreeNode fDecl = child(child(parsed.root, 0, parsed), 2, parsed);
@@ -52,7 +52,7 @@ class FunctionTranslatorTest {
     @Test
     void translatesNumericFunctionAndReturnTerm() {
         Parsed parsed = parse(": num #f ( #a ) { : : return ( #a ) } :");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         RecordingBody body = new RecordingBody(output);
         NameGen names = new NameGen();
         TermTranslator terms = new TermTranslator(output, names, parsed.nodes, parsed.symbols, NumericKind.INT);
@@ -86,7 +86,7 @@ class FunctionTranslatorTest {
     void translatesFunctionsInSourceOrder() {
         Parsed parsed = parse(
                 ": void #first ( ) { : : return } void #second ( ) { : : return } :");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         RecordingBody body = new RecordingBody(output);
         TreeNode fDecl = child(child(parsed.root, 0, parsed), 2, parsed);
         TreeNode firstType = child(fDecl, 0, parsed);
@@ -104,7 +104,7 @@ class FunctionTranslatorTest {
     @Test
     void emptyFunctionListEmitsNothing() {
         Parsed parsed = parse(": :");
-        Emitter output = new Emitter();
+        Emitter output = new Emitter("int");
         TreeNode fDecl = child(child(parsed.root, 0, parsed), 2, parsed);
 
         translator(parsed, output, new NameGen(), NumericKind.INT, new RecordingBody(output)).transFDecl(fDecl);
@@ -115,7 +115,8 @@ class FunctionTranslatorTest {
     @Test
     void emitsMineSafeOutputAndUsesFloatType() {
         Parsed parsed = parse(": num #f ( #a ) { : : return ( #a ) } :");
-        Emitter output = new Emitter(true);
+        Emitter output = new Emitter("float");
+        output.beginMine();
         RecordingBody body = new RecordingBody(output);
         NameGen names = new NameGen();
         TermTranslator terms = new TermTranslator(output, names, parsed.nodes, parsed.symbols, NumericKind.FLOAT);
@@ -211,7 +212,7 @@ class FunctionTranslatorTest {
         public void transBody(TreeNode p, RenameEnv env, boolean withMine) {
             programs.add(p);
             withMineValues.add(withMine);
-            out.emit("BODY");
+            out.line("BODY");
         }
     }
 }

@@ -16,6 +16,10 @@ public final class AssignTranslator {
     private final String cType;
     private final TermTranslator terms;
 
+    public AssignTranslator(CodegenContext ctx) {
+        this(ctx.out, ctx.names, ctx.nodes, ctx.symbols, ctx.kind, ctx.term);
+    }
+
     public AssignTranslator(
             Emitter out,
             NameGen names,

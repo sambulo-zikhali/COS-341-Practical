@@ -3,7 +3,7 @@ package spl.codegen;
 import spl.model.TreeNode;
 import spl.semantic.Symbol;
 
-public final class ProgramTranslator {
+public final class ProgramTranslator implements BodyTranslator {
     private final CodegenContext ctx;
 
     public ProgramTranslator(CodegenContext ctx) {
@@ -31,6 +31,7 @@ public final class ProgramTranslator {
         out.line("} /* end of executable C */");
     }
 
+    @Override
     public void transBody(TreeNode p, RenameEnv env, boolean withMine) {
         if(withMine) {
             if(!ctx.out.inMine()) throw new IllegalStateException
