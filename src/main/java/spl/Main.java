@@ -3,6 +3,8 @@ package spl;
 import spl.grammar.Grammar;
 import spl.grammar.ParsingTable;
 import spl.grammar.ParsingTableBuilder;
+import spl.codegen.CodeGenException;
+import spl.codegen.CodeGenerator;
 import spl.lexer.Lexer;
 import spl.lexer.LexerException;
 import spl.model.Token;
@@ -18,6 +20,7 @@ import spl.types.TypeAnalyser;
 import spl.types.TypeException;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -102,6 +105,34 @@ public class Main {
         System.out.println("Semantic analysis passed.");
         System.out.println("Type analysis passed.");
         System.out.println("Wrote " + outputPath.toAbsolutePath());
+
+        String generatedCode;
+        try {
+            generatedCode = CodeGenerator.generate(
+                    root,
+                    parser.getNodesById(),
+                    symbols,
+                    types.getNumericKind());
+        } catch (CodeGenException | UnsupportedOperationException e) {
+            System.err.println("Code generation error in " + inputPath.getFileName() + ":");
+            String nodeSuffix = e instanceof CodeGenException
+                    ? " (node " + ((CodeGenException) e).getNodeId() + ")"
+                    : "";
+            System.err.println("  " + e.getMessage() + nodeSuffix);
+            System.exit(1);
+            return;
+        }
+
+        Path cppOutputPath = Path.of("output.cpp");
+        try {
+            Files.writeString(cppOutputPath, generatedCode, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("Failed to write output.cpp:");
+            System.err.println("  " + e.getMessage());
+            System.exit(1);
+            return;
+        }
+        System.out.println("Wrote " + cppOutputPath.toAbsolutePath());
     }
 
     /**
