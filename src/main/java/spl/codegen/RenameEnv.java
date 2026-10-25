@@ -4,8 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class RenameEnv {
-    private final Map<String, String> entries = new HashMap<>();
+import spl.semantic.Symbol;
+
+public final class RenameEnv {
+    private final Map<Symbol, String> names = new HashMap<>();
+    private final Map<String,String> entries = new HashMap<>();
     private final RenameEnv parent;
 
     public RenameEnv() {
@@ -14,6 +17,10 @@ public class RenameEnv {
 
     private RenameEnv(RenameEnv parent) {
         this.parent = parent;
+    }
+
+    public static RenameEnv identity() {
+        return new RenameEnv(null);
     }
 
     public void put(String from, String to) {
@@ -33,5 +40,17 @@ public class RenameEnv {
 
     public RenameEnv child() {
         return new RenameEnv(this);
+    }
+
+    public void bind (Symbol s,String name) {
+        names.put(Objects.requireNonNull(s), Objects.requireNonNull(name));
+    }
+
+    public String nameOf(Symbol s) {
+        for (RenameEnv e = this; e!=null;e=e.parent) {
+            String n = e.names.get(s);
+            if(n !=  null) return n;
+        }
+        return s.internalName;
     }
 }

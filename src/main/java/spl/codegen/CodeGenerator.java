@@ -18,6 +18,6 @@ public final class CodeGenerator {
         ctx.term = new TermTransltor(ctx);
         ctx.funcs= new FunctionTranslator(ctx);
         ctx.program.transProgram(root);
-        return ctx.out.toSytring();
+        return ctx.out.toString();
     }
 }
