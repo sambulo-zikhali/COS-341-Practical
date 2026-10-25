@@ -13,52 +13,48 @@ public class CallInLiner {
         this.ctx = ctx;
     }
 
-    /**
-     * Translates a CALL node.
-     * @param callNode The CALL node
-     * @param contVar The continuation variable (null if called as an INSTR)
-     * @param env The current renaming environment
-     */
     public void transCall(TreeNode callNode, String contVar, RenameEnv env) {
-        FunctionRegistry.FunctionInfo info = ctx.registry.lookup(callNode);
+        // TODO: Sambulo must implement FunctionRegistry.lookup(callNode) 
+        // and return a FunctionInfo object. For now, this will not compile 
+        // until he adds it.
+        FunctionRegistry.FunctionInfo info = ctx.functions.lookup(callNode);
         
-        // 2. Create a new environment for the callee
-        RenameEnv calleeEnv = new RenameEnv(env, info.getFunctionNode());
-        
-        // 3. Capture arguments
-        TreeNode inputNode = ctx.nodes.get(callNode.children.get(2));
+        TreeNode nameNode = ctx.kid(callNode, 0);
+        TreeNode inputNode = ctx.kid(callNode, 2);
         List<TreeNode> args = collectTerms(inputNode);
         
-        if (args.size() != info.getParameters().size()) {
+        List<Symbol> params = info.getParameters();
+        if (args.size() != params.size()) {
             throw new CodeGenException(callNode.id, 
-                "Argument count mismatch for " + info.getInternalName() + 
-                ". Expected " + info.getParameters().size() + ", got " + args.size());
+                "Argument count mismatch for " + nameNode.contents + 
+                ". Expected " + params.size() + ", got " + args.size());
         }
 
         List<String> pNames = new ArrayList<>();
-        for (int i = 0; i < args.size(); i++) {
-            String p = ctx.nameGen.fresh("p");
+        for (TreeNode arg : args) {
+            String p = ctx.names.capture();
             pNames.add(p);
-            ctx.out.decl(ctx.type, p);
-            // Evaluate argument in caller env
-            ctx.term.transTerm(args.get(i), p, env);
+            ctx.out.decl(p);
+            ctx.term.transTerm(arg, p, env);
         }
 
-        // 4. Emit parameter assignments (Section 2, Problem 5: param = p)
+        // TODO: Sambulo must implement RenameEnv(RenameEnv parent, TreeNode functionNode)
+        // and RenameEnv.nameOf(Symbol) for this to work.
+        RenameEnv calleeEnv = new RenameEnv(env, info.getFunctionNode());
+
         for (int i = 0; i < args.size(); i++) {
-            Symbol paramSym = info.getParameters().get(i);
-            String paramName = calleeEnv.nameOf(paramSym);
-            ctx.out.line(paramName + " = " + pNames.get(i) + ";");
+            Symbol paramSym = params.get(i);
+            // Using the helper below until RenameEnv has nameOf(Symbol)
+            String paramName = renameSymbol(paramSym, calleeEnv);
+            ctx.out.line(paramName + " = " + pNames.get(i) + " ;");
         }
 
-        // 5. Inline the body
         ctx.program.transBody(info.getBody(), calleeEnv, false);
 
-        // 6. Handle return value
         if (contVar != null) {
-            String r = info.getReturnVar(calleeEnv); // e.g., "r_f123"
+            String r = info.getReturnVar(calleeEnv); 
             ctx.term.transTerm(info.getReturnTerm(), r, calleeEnv);
-            ctx.out.line(contVar + " = " + r + ";");
+            ctx.out.line(contVar + " = " + r + " ;");
         }
     }
 
@@ -66,10 +62,16 @@ public class CallInLiner {
         List<TreeNode> terms = new ArrayList<>();
         TreeNode current = inputNode;
         while (!current.children.isEmpty()) {
-            // INPUT -> TERM INPUT
-            terms.add(ctx.nodes.get(current.children.get(0)));
-            current = ctx.nodes.get(current.children.get(1));
+            terms.add(ctx.kid(current, 0));
+            current = ctx.kid(current, 1);
         }
         return terms;
+    }
+
+    // Helper method to call your current RenameEnv.lookup(String)
+    private String renameSymbol(Symbol sym, RenameEnv env) {
+        // Symbol.internalName is already unique from Phase 2a (e.g., "v0").
+        // The env.lookup() checks if this copy of the function renames it.
+        return env.lookup(sym.internalName);
     }
 }

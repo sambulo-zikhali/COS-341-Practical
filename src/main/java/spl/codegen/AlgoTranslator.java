@@ -14,58 +14,58 @@ public class AlgoTranslator {
             return;
         }
         // ALGO -> INSTR ; ALGO
-        TreeNode instr = ctx.nodes.get(node.children.get(0));
-        TreeNode nextAlgo = ctx.nodes.get(node.children.get(2));
+        TreeNode instr = ctx.kid(node, 0);
+        TreeNode nextAlgo = ctx.kid(node, 2);
 
         transInstr(instr, env);
         transAlgo(nextAlgo, env);
     }
 
     private void transInstr(TreeNode node, RenameEnv env) {
-        TreeNode inner = ctx.nodes.get(node.children.get(0));
+        TreeNode inner = ctx.kid(node, 0);
         String type = inner.contents;
 
         switch (type) {
             case "print":
-                transPrint(node, inner, env);
+                transPrint(inner, env);
                 break;
             case "nop":
                 ctx.out.line("/* nop */");
                 break;
             case "comment":
-                TreeNode strNode = ctx.nodes.get(inner.children.get(1));
-                ctx.out.line("/* " + strNode.contents + " */");
+                TreeNode strNode = ctx.kid(inner, 1);
+                ctx.out.line("/* " + Emitter.stringLiteral(strNode.contents) + " */");
                 break;
             case "ASSIGN":
-                ctx.term.transAssign(inner, env); // Delegating to TermTranslator
+                ctx.term.transAssign(inner, env);
                 break;
             case "BRANCH":
-                ctx.bool.transBranch(inner, env); // Delegating to Divo's BoolTranslator
+                ctx.bool.transBranch(inner, env);
                 break;
             case "LOOP":
-                ctx.bool.transLoop(inner, env);   // Delegating to Divo's BoolTranslator
+                ctx.bool.transLoop(inner, env);
                 break;
             case "CALL":
-                ctx.calls.transCall(inner, null, env); // Delegating to your CallInLiner
+                ctx.calls.transCall(inner, null, env);
                 break;
             default:
                 throw new CodeGenException(node.id, "Unknown INSTR type: " + type);
         }
     }
 
-    private void transPrint(TreeNode instrNode, TreeNode innerNode, RenameEnv env) {
-        TreeNode outp = ctx.nodes.get(innerNode.children.get(1));
+    private void transPrint(TreeNode innerNode, RenameEnv env) {
+        TreeNode outp = ctx.kid(innerNode, 1);
         
         if (outp.contents.equals("STRING")) {
-            TreeNode strNode = ctx.nodes.get(outp.children.get(0));
-            ctx.out.line("std::cout << " + strNode.contents + ";");
+            TreeNode strNode = ctx.kid(outp, 0);
+            ctx.out.line("std::cout << " + Emitter.stringLiteral(strNode.contents) + " ;");
         } else {
-            TreeNode term = ctx.nodes.get(outp.children.get(1));
-            String tN = ctx.nameGen.fresh("t");
+            TreeNode term = ctx.kid(outp, 1);
+            String tN = ctx.names.temp();
             
-            ctx.out.decl(ctx.type, tN);
+            ctx.out.decl(tN);
             ctx.term.transTerm(term, tN, env);
-            ctx.out.line("std::cout << " + tN + ";");
+            ctx.out.line("std::cout << " + tN + " ;");
         }
     }
 }
