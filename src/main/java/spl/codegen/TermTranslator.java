@@ -14,6 +14,7 @@ public final class TermTranslator {
     private final Map<Integer, TreeNode> nodes;
     private final SymbolTable symbols;
     private final String cType;
+    private CallInLiner calls;
 
     public TermTranslator(CodegenContext ctx) {
         this(ctx.out, ctx.names, ctx.nodes, ctx.symbols, ctx.kind);
@@ -29,6 +30,10 @@ public final class TermTranslator {
         this.nodes = Objects.requireNonNull(nodes);
         this.symbols = Objects.requireNonNull(symbols);
         this.cType = Objects.requireNonNull(kind).cType;
+    }
+
+    public void setCalls(CallInLiner calls) {
+        this.calls = calls;
     }
 
     public void transTerm(TreeNode term, String dest, RenameEnv env) {
@@ -69,7 +74,11 @@ public final class TermTranslator {
                 transNeg(term, dest, env);
                 break;
             case "CALL":
-                throw new UnsupportedOperationException("calls not implemented yet");
+                if (calls == null) {
+                    throw new UnsupportedOperationException("calls not implemented yet");
+                }
+                calls.transCall(childAt(term, 0), dest, env);
+                break;
             default:
                 throw new CodeGenException(term.id, "Unknown TERM type: " + contents);
         }

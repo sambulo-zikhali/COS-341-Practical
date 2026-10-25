@@ -17,6 +17,7 @@ public final class CodeGenerator {
         ctx.assign = new AssignTranslator(ctx);
         ctx.algo = new AlgoTranslator(ctx);
         ctx.calls = new CallInLiner(ctx);
+        ctx.term.setCalls(ctx.calls);
         ctx.funcs= new FunctionTranslator(ctx);
         ctx.program.transProgram(root);
         return ctx.out.toString();
