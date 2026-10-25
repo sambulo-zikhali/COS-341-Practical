@@ -3,6 +3,7 @@ package spl.codegen;
 import spl.model.TreeNode;
 import spl.semantic.Symbol;
 
+
 public final class ProgramTranslator {
     private final CodegenContext ctx;
 
@@ -45,7 +46,7 @@ public final class ProgramTranslator {
     public void transVDecl(TreeNode vDecl, RenameEnv env) {
         TreeNode cur = vDecl;
         while(!cur.children.isEmpty()) {
-            Symbol s = ctx.SynbolOf(ctx.kid(cur,0));
+            Symbol s = ctx.symbolOf(ctx.kid(cur,0));
             ctx.out.decl(env.nameOf(s));
             cur = ctx.kid(cur, 1);
         }

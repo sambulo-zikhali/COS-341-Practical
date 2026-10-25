@@ -11,7 +11,7 @@ public final class Emitter {
         this.typ=typ;
     }
 
-    public boolean inMin() {return mineDepth>0;}
+    public boolean inMine() {return mineDepth>0;}
     public void beginMine() {mineDepth++;}
     public void endMine() {mineDepth--;}
 
