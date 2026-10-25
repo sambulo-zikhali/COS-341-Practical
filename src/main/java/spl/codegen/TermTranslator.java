@@ -45,7 +45,7 @@ public final class TermTranslator {
         }
 
         if (contents.matches("[-\\u2013]?[0-9]+(\\.[0-9]+)?")) {
-            out.line(dest + " = " + contents.replace('\u2013', '-') + " ;");
+            out.line(dest + " = " + Emitter.number(contents) + " ;");
             return;
         }
 

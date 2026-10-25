@@ -20,15 +20,16 @@ public final class ProgramTranslator implements BodyTranslator {
         out.endMine();
         out.line("end of the non-executable code-mine */");
 
-        out.line("/* begin of executaable C code */");
+        out.line("/* begin of executable C code */");
         out.line("#include <iostream>");
         out.line("int main()");
         out.line("{");
         RenameEnv env = RenameEnv.identity();
         transVDecl(ctx.kid(p,0), env);
         ctx.algo.transAlgo(ctx.kid(p,4), env);
-        out.line("return 0;");
-        out.line("} /* end of executable C */");
+        out.line("return 0 ;");
+        out.line("}");
+        out.line("/* end of executable C */");
     }
 
     @Override

@@ -27,14 +27,15 @@ public class AlgoTranslator {
 
         switch (type) {
             case "print":
-                transPrint(inner, env);
+                transPrint(ctx.kid(node, 1), env);
                 break;
             case "nop":
-                ctx.out.line("/* nop */");
+                ctx.out.line(ctx.out.note("nop"));
                 break;
             case "comment":
-                TreeNode strNode = ctx.kid(inner, 1);
-                ctx.out.line("/* " + Emitter.stringLiteral(strNode.contents) + " */");
+                TreeNode strNode = ctx.kid(node, 1);
+                String comment = strNode.contents.substring(1, strNode.contents.length() - 1);
+                ctx.out.line(ctx.out.note(comment));
                 break;
             case "ASSIGN":
                 ctx.assign.transAssign(inner, env);
@@ -53,19 +54,18 @@ public class AlgoTranslator {
         }
     }
 
-    private void transPrint(TreeNode innerNode, RenameEnv env) {
-        TreeNode outp = ctx.kid(innerNode, 1);
-        
-        if (outp.contents.equals("STRING")) {
-            TreeNode strNode = ctx.kid(outp, 0);
-            ctx.out.line("std::cout << " + Emitter.stringLiteral(strNode.contents) + " ;");
-        } else {
+    private void transPrint(TreeNode outp, RenameEnv env) {
+
+        if (ctx.kid(outp, 0).contents.equals("(")) {
             TreeNode term = ctx.kid(outp, 1);
             String tN = ctx.names.temp();
-            
+
             ctx.out.decl(tN);
             ctx.term.transTerm(term, tN, env);
             ctx.out.line("std::cout << " + tN + " ;");
+        } else {
+            String token = ctx.kid(outp, 0).contents;
+            ctx.out.line("std::cout << " + Emitter.stringLiteral(token) + " ;");
         }
     }
 }

@@ -44,7 +44,7 @@ public final class Emitter {
 
     //negative numbers user an en dash, C++ needs ASCVII minus idk if theres a differnce
     public static String number(String token) {
-        return token.replace('\u2023', '-');
+        return token.replace('\u2013', '-');
     }
 
     //String token
