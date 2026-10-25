@@ -10,6 +10,10 @@ public class NameGen {
         return prefix + counter++;
     }
 
+    public String fresh(String prefix) {
+        return next(prefix);
+    }
+
     public String temp() {
         return next("t");
     }

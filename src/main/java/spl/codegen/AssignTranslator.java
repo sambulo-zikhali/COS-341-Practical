@@ -40,9 +40,9 @@ public final class AssignTranslator {
             throw new CodeGenException(nameLeaf.id, "No symbol binding found for '" + nameLeaf.contents + "'");
         }
 
-        out.emit(cType + " " + temp + " ;");
+        out.line(cType + " " + temp + " ;");
         terms.transTerm(termNode, temp, env);
-        out.emit(env.lookup(symbol.internalName) + " = " + temp + " ;");
+        out.line(env.lookup(symbol.internalName) + " = " + temp + " ;");
     }
 
     private TreeNode childAt(TreeNode node, int index) {

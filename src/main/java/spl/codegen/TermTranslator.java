@@ -14,7 +14,11 @@ public final class TermTranslator {
     private final Map<Integer, TreeNode> nodes;
     private final SymbolTable symbols;
     private final String cType;
+    private final CodegenContext ctx;
 
+        public TermTranslator(CodegenContext ctx) {
+        this.ctx = ctx;
+    }
     public TermTranslator(
             Emitter out,
             NameGen names,
@@ -37,12 +41,12 @@ public final class TermTranslator {
             if (symbol == null) {
                 throw new CodeGenException(form.id, "No symbol binding found for '" + contents + "'");
             }
-            out.emit(dest + " = " + env.lookup(symbol.internalName) + " ;");
+            out.line(dest + " = " + env.lookup(symbol.internalName) + " ;");
             return;
         }
 
         if (contents.matches("[-\\u2013]?[0-9]+(\\.[0-9]+)?")) {
-            out.emit(dest + " = " + contents.replace('\u2013', '-') + " ;");
+            out.line(dest + " = " + contents.replace('\u2013', '-') + " ;");
             return;
         }
 
@@ -75,18 +79,18 @@ public final class TermTranslator {
     private void transBinary(TreeNode term, String dest, RenameEnv env, String operator) {
         String leftTemp = names.temp();
         String rightTemp = names.temp();
-        out.emit(cType + " " + leftTemp + " ;");
-        out.emit(cType + " " + rightTemp + " ;");
+        out.line(cType + " " + leftTemp + " ;");
+        out.line(cType + " " + rightTemp + " ;");
         transTerm(childAt(term, 2), leftTemp, env);
         transTerm(childAt(term, 3), rightTemp, env);
-        out.emit(dest + " = " + leftTemp + " " + operator + " " + rightTemp + " ;");
+        out.line(dest + " = " + leftTemp + " " + operator + " " + rightTemp + " ;");
     }
 
     private void transNeg(TreeNode term, String dest, RenameEnv env) {
         String temp = names.temp();
-        out.emit(cType + " " + temp + " ;");
+        out.line(cType + " " + temp + " ;");
         transTerm(childAt(term, 2), temp, env);
-        out.emit(dest + " = - " + temp + " ;");
+        out.line(dest + " = - " + temp + " ;");
     }
 
     private TreeNode childAt(TreeNode node, int index) {

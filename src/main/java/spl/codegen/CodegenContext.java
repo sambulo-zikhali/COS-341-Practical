@@ -20,7 +20,7 @@ public final class CodegenContext {
     public BoolTranslator bool;
     public AlgoTranslator algo;
     public CallInLiner calls;
-    public TermTransltor term;
+    public TermTranslator term;
     public FunctionTranslator funcs;
 
     public CodegenContext(Map<Integer,TreeNode> nodes, SymbolTable symbols,NumericKind kind) {
