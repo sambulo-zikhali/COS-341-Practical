@@ -1,5 +1,9 @@
 package spl.codegen;
 
+/**
+ * Thrown when the code generator encounters an invalid tree structure,
+ * missing symbol, or an unhandled grammar rule.
+ */
 public class CodeGenException extends RuntimeException {
     private final int nodeId;
 
