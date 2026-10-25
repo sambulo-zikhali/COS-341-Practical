@@ -68,7 +68,8 @@ class CompileAndRunTest {
     @Test
     void evaluatesNotCondition(@TempDir Path tempDir) throws Exception {
         assertProgramOutput(
-                "if not ( eq ( 1 2 ) ) then { print \"yes\" ; } else { print \"no\" ; } ;",
+                ": : if not ( eq ( 1 2 ) ) then { print \"yes\" ; } "
+                        + "else { print \"no\" ; } ;",
                 "yes",
                 tempDir);
     }
@@ -76,7 +77,7 @@ class CompileAndRunTest {
     @Test
     void evaluatesTrueAndCondition(@TempDir Path tempDir) throws Exception {
         assertProgramOutput(
-                "if and ( larger ( 2 1 ) lesser ( 1 2 ) ) then { print \"yes\" ; } "
+                ": : if and ( larger ( 2 1 ) lesser ( 1 2 ) ) then { print \"yes\" ; } "
                         + "else { print \"no\" ; } ;",
                 "yes",
                 tempDir);
@@ -85,7 +86,7 @@ class CompileAndRunTest {
     @Test
     void evaluatesFalseAndCondition(@TempDir Path tempDir) throws Exception {
         assertProgramOutput(
-                "if and ( larger ( 2 1 ) lesser ( 2 1 ) ) then { print \"yes\" ; } "
+                ": : if and ( larger ( 2 1 ) lesser ( 2 1 ) ) then { print \"yes\" ; } "
                         + "else { print \"no\" ; } ;",
                 "no",
                 tempDir);
@@ -94,7 +95,7 @@ class CompileAndRunTest {
     @Test
     void evaluatesOrCondition(@TempDir Path tempDir) throws Exception {
         assertProgramOutput(
-                "if or ( eq ( 1 2 ) eq ( 3 3 ) ) then { print \"yes\" ; } "
+                ": : if or ( eq ( 1 2 ) eq ( 3 3 ) ) then { print \"yes\" ; } "
                         + "else { print \"no\" ; } ;",
                 "yes",
                 tempDir);
