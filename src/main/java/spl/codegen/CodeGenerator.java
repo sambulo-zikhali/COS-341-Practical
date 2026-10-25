@@ -10,6 +10,14 @@ public final class CodeGenerator {
     private CodeGenerator() { }
 
     public static String generate(TreeNode root,Map<Integer,TreeNode>nodes,SymbolTable symbols,NumericKind kind) {
-        throw new UnsupportedOperationException("code generation not wired up yet");
+        CodegenContext ctx = new CodegenContext(nodes,symbols,kind);
+        ctx.program = new ProgramTranslator(ctx);
+        ctx.bool = new BoolTranslator(ctx);
+        ctx.algo = new AlgoTranslator(ctx);
+        ctx.calls = new CallInLiner(ctx);
+        ctx.term = new TermTransltor(ctx);
+        ctx.funcs= new FunctionTranslator(ctx);
+        ctx.program.transProgram(root);
+        return ctx.out.toSytring();
     }
 }
