@@ -1,5 +1,9 @@
 package spl.codegen;
 
-public class NameGen {
-    
+public final class NameGen {
+    private int next;
+
+    public String fresh(String prefix) {
+        return prefix + (next++);
+    }
 }
