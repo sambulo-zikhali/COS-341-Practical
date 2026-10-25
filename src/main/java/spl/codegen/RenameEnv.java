@@ -44,6 +44,7 @@ public final class RenameEnv {
 
     public void bind (Symbol s,String name) {
         names.put(Objects.requireNonNull(s), Objects.requireNonNull(name));
+        entries.put(s.internalName,name);
     }
 
     public String nameOf(Symbol s) {

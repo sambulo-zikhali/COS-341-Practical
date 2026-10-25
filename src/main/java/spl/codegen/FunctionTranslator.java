@@ -42,7 +42,7 @@ public final class FunctionTranslator {
             TreeNode functionType = childAt(current, 0);
             TreeNode nextDeclaration = childAt(current, 1);
             transFunction(functionType);
-            out.emit("");
+            out.line("");
             current = nextDeclaration;
         }
     }
@@ -56,28 +56,28 @@ public final class FunctionTranslator {
         RenameEnv env = new RenameEnv();
 
         if ("void".equals(typeLeaf.contents)) {
-            out.emit("begin of code-mine for void-procedure " + function.internalName);
-            out.emit("Parameters for inlining:");
+            out.line("begin of code-mine for void-procedure " + function.internalName);
+            out.line("Parameters for inlining:");
             emitParameters(parameters);
-            out.emit("Body of the procedure:");
+            out.line("Body of the procedure:");
             body.transBody(program, env, false);
-            out.emit("end of code-mine for void-procedure " + function.internalName);
+            out.line("end of code-mine for void-procedure " + function.internalName);
             return;
         }
 
         if ("num".equals(typeLeaf.contents)) {
-            out.emit("begin of code-mine for Function " + function.internalName);
-            out.emit("Parameters for inlining:");
+            out.line("begin of code-mine for Function " + function.internalName);
+            out.line("Parameters for inlining:");
             emitParameters(parameters);
-            out.emit("Body of the procedure:");
+            out.line("Body of the procedure:");
             body.transBody(program, env, false);
-            out.emit(";");
+            out.line(";");
 
             String returnName = function.internalName + names.ret();
-            out.emit(cType + " " + returnName + " ;");
+            out.line(cType + " " + returnName + " ;");
             terms.transTerm(childAt(functionType, 9), returnName, env);
-            out.emit("end of code-mine for Function " + function.internalName);
-            out.emit("The result is found in the return value " + returnName);
+            out.line("end of code-mine for Function " + function.internalName);
+            out.line("The result is found in the return value " + returnName);
             return;
         }
 
@@ -86,7 +86,7 @@ public final class FunctionTranslator {
 
     private void emitParameters(List<String> parameters) {
         for (String parameter : parameters) {
-            out.emit(cType + " " + parameter + " ;");
+            out.line(cType + " " + parameter + " ;");
         }
     }
 
